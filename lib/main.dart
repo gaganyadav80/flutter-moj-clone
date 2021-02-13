@@ -6,6 +6,7 @@ import 'package:edverhub_video_editor/ui/pages/camera_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
+import 'ui/pages/edit_video_screen.dart';
 import 'utils.dart';
 
 List<CameraDescription> cameras = [];
@@ -36,8 +37,51 @@ class CameraApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: CameraExampleHome(
-        cameras: cameras,
+      home: ChooseScreen(),
+    );
+  }
+}
+
+class ChooseScreen extends StatelessWidget {
+  const ChooseScreen({Key key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: Text("Video Editor"),
+        centerTitle: true,
+      ),
+      body: Center(
+        child: Container(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RaisedButton(
+                child: Text("Record Video"),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CameraExampleHome(
+                      cameras: cameras,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 20.0),
+              RaisedButton(
+                child: Text("Browse from gallery"),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditVideoScreen(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
