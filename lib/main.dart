@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:camera/camera.dart';
+import 'package:chewie/chewie.dart';
 import 'package:edverhub_video_editor/ui/pages/camera_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 import 'ui/pages/edit_video_screen.dart';
 import 'utils.dart';
@@ -42,8 +44,32 @@ class CameraApp extends StatelessWidget {
   }
 }
 
-class ChooseScreen extends StatelessWidget {
+class ChooseScreen extends StatefulWidget {
   const ChooseScreen({Key key}) : super(key: key);
+
+  @override
+  _ChooseScreenState createState() => _ChooseScreenState();
+}
+
+class _ChooseScreenState extends State<ChooseScreen> {
+  final _picker = ImagePicker();
+  File _video;
+
+  VideoPlayerController _videoPlayerController;
+  ChewieController _chewieController;
+
+  Future<void> _initVideo() async {
+    _videoPlayerController = VideoPlayerController.file(_video);
+    await _videoPlayerController.initialize();
+
+    _chewieController = ChewieController(
+      videoPlayerController: _videoPlayerController,
+      showControls: false,
+      allowedScreenSleep: false,
+      autoPlay: true,
+      looping: true,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,12 +98,27 @@ class ChooseScreen extends StatelessWidget {
               SizedBox(height: 20.0),
               RaisedButton(
                 child: Text("Browse from gallery"),
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => EditVideoScreen(),
-                  ),
-                ),
+                onPressed: () async {
+                  PickedFile pickedFile = await _picker.getVideo(source: ImageSource.gallery);
+                  if (pickedFile != null) {
+                    _video = File(pickedFile.path);
+                    await _initVideo();
+                  } else {
+                    print("No video file selected");
+                  }
+
+                  if (_video != null)
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EditVideoScreen(
+                          video: _video,
+                          videoPlayerController: _videoPlayerController,
+                          chewieController: _chewieController,
+                        ),
+                      ),
+                    );
+                },
               ),
             ],
           ),
