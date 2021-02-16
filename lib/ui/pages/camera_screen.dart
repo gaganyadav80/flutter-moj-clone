@@ -1,9 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:edverhub_video_editor/main.dart';
 import 'package:edverhub_video_editor/ui/components/camera_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:flutter_ffmpeg/ffmpeg_execution.dart';
+import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../utils.dart';
@@ -30,6 +34,8 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
   Timer _timer;
   int videoSpeed = 1;
   int _seconds = 30;
+  int _cStart = 0;
+  int _cEnd = 0;
   CameraController controller;
   XFile imageFile;
   XFile videoFile;
@@ -406,37 +412,37 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
   //   );
   // }
 
-  /// Display the control bar with buttons to take pictures and record videos.
-  Widget _captureControlRowWidget() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      mainAxisSize: MainAxisSize.max,
-      children: <Widget>[
-        // IconButton(
-        //   icon: const Icon(Icons.camera_alt),
-        //   color: Colors.white,
-        //   onPressed: controller != null && controller.value.isInitialized && !controller.value.isRecordingVideo ? onTakePictureButtonPressed : null,
-        // ),
-        IconButton(
-          icon: Icon(Icons.videocam),
-          color: Colors.white,
-          onPressed: controller != null && controller.value.isInitialized && !controller.value.isRecordingVideo ? onVideoRecordButtonPressed : null,
-        ),
-        // IconButton(
-        //   icon: controller != null && controller.value.isRecordingPaused ? Icon(Icons.play_arrow) : Icon(Icons.pause),
-        //   color: Colors.white,
-        //   onPressed: controller != null && controller.value.isInitialized && controller.value.isRecordingVideo
-        //       ? (controller != null && controller.value.isRecordingPaused ? onResumeButtonPressed : onPauseButtonPressed)
-        //       : null,
-        // ),
-        IconButton(
-          icon: Icon(Icons.stop),
-          color: Colors.white,
-          onPressed: controller != null && controller.value.isInitialized && controller.value.isRecordingVideo ? onStopButtonPressed : null,
-        )
-      ],
-    );
-  }
+  // /// Display the control bar with buttons to take pictures and record videos.
+  // Widget _captureControlRowWidget() {
+  //   return Row(
+  //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  //     mainAxisSize: MainAxisSize.max,
+  //     children: <Widget>[
+  //       // IconButton(
+  //       //   icon: const Icon(Icons.camera_alt),
+  //       //   color: Colors.white,
+  //       //   onPressed: controller != null && controller.value.isInitialized && !controller.value.isRecordingVideo ? onTakePictureButtonPressed : null,
+  //       // ),
+  //       IconButton(
+  //         icon: Icon(Icons.videocam),
+  //         color: Colors.white,
+  //         onPressed: controller != null && controller.value.isInitialized && !controller.value.isRecordingVideo ? onVideoRecordButtonPressed : null,
+  //       ),
+  //       // IconButton(
+  //       //   icon: controller != null && controller.value.isRecordingPaused ? Icon(Icons.play_arrow) : Icon(Icons.pause),
+  //       //   color: Colors.white,
+  //       //   onPressed: controller != null && controller.value.isInitialized && controller.value.isRecordingVideo
+  //       //       ? (controller != null && controller.value.isRecordingPaused ? onResumeButtonPressed : onPauseButtonPressed)
+  //       //       : null,
+  //       // ),
+  //       IconButton(
+  //         icon: Icon(Icons.stop),
+  //         color: Colors.white,
+  //         onPressed: controller != null && controller.value.isInitialized && controller.value.isRecordingVideo ? onStopButtonPressed : null,
+  //       )
+  //     ],
+  //   );
+  // }
 
   /// Display a row of toggle to select the camera (or a message if no camera is available).
   // Widget _cameraTogglesRowWidget() {
@@ -615,8 +621,9 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
         });
       if (file != null) {
         showInSnackBar('Video recorded to ${file.path}');
-        videoFile = file;
-        _startVideoPlayer();
+
+        // videoFile = file;
+        // _startVideoPlayer();
       }
     });
   }
@@ -868,10 +875,13 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
                         ),
                       ),
                       GestureDetector(
-                        onTap: controller != null && controller.value.isInitialized && !controller.value.isRecordingVideo ? onVideoRecordButtonPressed : onStopButtonPressed,
+                        onTap: () {
+                          // if (_seconds <= 30) {}
+                          return controller != null && controller.value.isInitialized && !controller.value.isRecordingVideo ? onVideoRecordButtonPressed() : onStopButtonPressed();
+                        },
                         child: CircleAvatar(
                           radius: 30,
-                          backgroundColor: controller.value.isRecordingVideo ? Colors.white : Colors.red,
+                          backgroundColor: controller.value.isRecordingVideo ? Colors.white : Colors.orange,
                         ),
                       ),
                       IconButton(
@@ -896,6 +906,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
               ),
             ),
           ),
+
           Align(
             alignment: Alignment.centerRight,
             child: Padding(
@@ -905,6 +916,11 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
+                    IconButton(
+                      icon: Icon(Icons.cancel_presentation_outlined),
+                      color: Colors.orange,
+                      onPressed: () {},
+                    ),
                     IconButton(
                       icon: Icon(enableAudio ? Icons.volume_up : Icons.volume_off),
                       color: Colors.orange,
@@ -918,6 +934,35 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
                     _flashModeControlRowWidget(),
                   ],
                 ),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: EdgeInsets.all(8.0),
+              child: IconButton(
+                icon: Icon(Icons.cancel_outlined),
+                color: Colors.orange,
+                onPressed: () {
+                  print('cancel pressed');
+                  if (controller != null && controller.value.isInitialized) {
+                    if (controller.value.isRecordingVideo) {
+                      return onStopButtonPressed();
+                    }
+                    if (controller.value.isRecordingPaused) {
+                      return onStopButtonPressed();
+                    }
+                  } else {
+                    // Navigator.push(
+                    //   context,
+                    //   MaterialPageRoute(
+                    //     builder: (context) => ChooseScreen(),
+                    //   ),
+                    // );
+                    Navigator.of(context).pop();
+                  }
+                },
               ),
             ),
           ),
