@@ -223,54 +223,6 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
     );
   }
 
-  /// Display a bar with buttons to change the flash and exposure modes
-  Widget _modeControlRowWidget() {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          mainAxisSize: MainAxisSize.max,
-          children: <Widget>[
-            IconButton(
-              icon: Icon(
-                Icons.flash_on,
-                size: iconSize,
-              ),
-              color: Colors.blue,
-              onPressed: controller != null ? onFlashModeButtonPressed : null,
-            ),
-            // IconButton(
-            //   icon: Icon(Icons.exposure),
-            //   color: Colors.blue,
-            //   onPressed: controller != null ? onExposureModeButtonPressed : null,
-            // ),
-            // IconButton(
-            //   icon: Icon(Icons.filter_center_focus),
-            //   color: Colors.blue,
-            //   onPressed: controller != null ? onFocusModeButtonPressed : null,
-            // ),
-            IconButton(
-              icon: Icon(
-                enableAudio ? Icons.volume_up : Icons.volume_mute,
-                size: iconSize,
-              ),
-              color: Colors.blue,
-              onPressed: controller != null ? onAudioModeButtonPressed : null,
-            ),
-            // IconButton(
-            //   icon: Icon(controller?.value?.isCaptureOrientationLocked ?? false ? Icons.screen_lock_rotation : Icons.screen_rotation),
-            //   color: Colors.blue,
-            //   onPressed: controller != null ? onCaptureOrientationLockButtonPressed : null,
-            // ),
-          ],
-        ),
-        _flashModeControlRowWidget(),
-        // _exposureModeControlRowWidget(),
-        // _focusModeControlRowWidget(),
-      ],
-    );
-  }
-
   Widget _flashModeControlRowWidget() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -319,177 +271,6 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
       ),
     );
   }
-
-  // Widget _exposureModeControlRowWidget() {
-  //   final ButtonStyle styleAuto = TextButton.styleFrom(
-  //     primary: controller?.value?.exposureMode == ExposureMode.auto ? Colors.orange : Colors.blue,
-  //   );
-  //   final ButtonStyle styleLocked = TextButton.styleFrom(
-  //     primary: controller?.value?.exposureMode == ExposureMode.locked ? Colors.orange : Colors.blue,
-  //   );
-
-  //   return SingleChildScrollView(
-  //     scrollDirection: Axis.horizontal,
-  //     child: SizeTransition(
-  //       sizeFactor: _exposureModeControlRowAnimation,
-  //       child: ClipRect(
-  //         child: Container(
-  //           color: Colors.grey.shade50,
-  //           child: Column(
-  //             children: [
-  //               Center(
-  //                 child: Text("Exposure Mode"),
-  //               ),
-  //               Row(
-  //                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-  //                 mainAxisSize: MainAxisSize.max,
-  //                 children: [
-  //                   TextButton(
-  //                     child: Text('AUTO'),
-  //                     style: styleAuto,
-  //                     onPressed: controller != null ? () => onSetExposureModeButtonPressed(ExposureMode.auto) : null,
-  //                     onLongPress: () {
-  //                       if (controller != null) controller.setExposurePoint(null);
-  //                       showInSnackBar('Resetting exposure point');
-  //                     },
-  //                   ),
-  //                   TextButton(
-  //                     child: Text('LOCKED'),
-  //                     style: styleLocked,
-  //                     onPressed: controller != null ? () => onSetExposureModeButtonPressed(ExposureMode.locked) : null,
-  //                   ),
-  //                 ],
-  //               ),
-  //               Center(
-  //                 child: Text("Exposure Offset"),
-  //               ),
-  //               Row(
-  //                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-  //                 mainAxisSize: MainAxisSize.max,
-  //                 children: [
-  //                   Text(_minAvailableExposureOffset.toString()),
-  //                   Slider(
-  //                     value: _currentExposureOffset,
-  //                     min: _minAvailableExposureOffset,
-  //                     max: _maxAvailableExposureOffset,
-  //                     label: _currentExposureOffset.toString(),
-  //                     onChanged: _minAvailableExposureOffset == _maxAvailableExposureOffset ? null : setExposureOffset,
-  //                   ),
-  //                   Text(_maxAvailableExposureOffset.toString()),
-  //                 ],
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // Widget _focusModeControlRowWidget() {
-  //   final ButtonStyle styleAuto = TextButton.styleFrom(
-  //     primary: controller?.value?.focusMode == FocusMode.auto ? Colors.orange : Colors.blue,
-  //   );
-  //   final ButtonStyle styleLocked = TextButton.styleFrom(
-  //     primary: controller?.value?.focusMode == FocusMode.locked ? Colors.orange : Colors.blue,
-  //   );
-
-  //   return SingleChildScrollView(
-  //     scrollDirection: Axis.horizontal,
-  //     child: SizeTransition(
-  //       sizeFactor: _focusModeControlRowAnimation,
-  //       child: ClipRect(
-  //         child: Container(
-  //           color: Colors.grey.shade50,
-  //           child: Column(
-  //             children: [
-  //               Center(
-  //                 child: Text("Focus Mode"),
-  //               ),
-  //               Row(
-  //                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-  //                 mainAxisSize: MainAxisSize.max,
-  //                 children: [
-  //                   TextButton(
-  //                     child: Text('AUTO'),
-  //                     style: styleAuto,
-  //                     onPressed: controller != null ? () => onSetFocusModeButtonPressed(FocusMode.auto) : null,
-  //                     onLongPress: () {
-  //                       if (controller != null) controller.setFocusPoint(null);
-  //                       showInSnackBar('Resetting focus point');
-  //                     },
-  //                   ),
-  //                   TextButton(
-  //                     child: Text('LOCKED'),
-  //                     style: styleLocked,
-  //                     onPressed: controller != null ? () => onSetFocusModeButtonPressed(FocusMode.locked) : null,
-  //                   ),
-  //                 ],
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // /// Display the control bar with buttons to take pictures and record videos.
-  // Widget _captureControlRowWidget() {
-  //   return Row(
-  //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-  //     mainAxisSize: MainAxisSize.max,
-  //     children: <Widget>[
-  //       // IconButton(
-  //       //   icon: const Icon(Icons.camera_alt),
-  //       //   color: Colors.white,
-  //       //   onPressed: controller != null && controller.value.isInitialized && !controller.value.isRecordingVideo ? onTakePictureButtonPressed : null,
-  //       // ),
-  //       IconButton(
-  //         icon: Icon(Icons.videocam),
-  //         color: Colors.white,
-  //         onPressed: controller != null && controller.value.isInitialized && !controller.value.isRecordingVideo ? onVideoRecordButtonPressed : null,
-  //       ),
-  //       // IconButton(
-  //       //   icon: controller != null && controller.value.isRecordingPaused ? Icon(Icons.play_arrow) : Icon(Icons.pause),
-  //       //   color: Colors.white,
-  //       //   onPressed: controller != null && controller.value.isInitialized && controller.value.isRecordingVideo
-  //       //       ? (controller != null && controller.value.isRecordingPaused ? onResumeButtonPressed : onPauseButtonPressed)
-  //       //       : null,
-  //       // ),
-  //       IconButton(
-  //         icon: Icon(Icons.stop),
-  //         color: Colors.white,
-  //         onPressed: controller != null && controller.value.isInitialized && controller.value.isRecordingVideo ? onStopButtonPressed : null,
-  //       )
-  //     ],
-  //   );
-  // }
-
-  /// Display a row of toggle to select the camera (or a message if no camera is available).
-  // Widget _cameraTogglesRowWidget() {
-  //   final List<Widget> toggles = <Widget>[];
-
-  //   if (cameras.isEmpty) {
-  //     return const Text('No camera found');
-  //   } else {
-  //     for (CameraDescription cameraDescription in cameras) {
-  //       toggles.add(
-  //         SizedBox(
-  //           width: 90.0,
-  //           child: RadioListTile<CameraDescription>(
-  //             title: Icon(getCameraLensIcon(cameraDescription.lensDirection)),
-  //             groupValue: controller?.description,
-  //             value: cameraDescription,
-  //             onChanged: controller != null && controller.value.isRecordingVideo ? null : onNewCameraSelected,
-  //           ),
-  //         ),
-  //       );
-  //     }
-  //   }
-
-  //   return Row(children: toggles);
-  // }
 
   String timestamp() => DateTime.now().millisecondsSinceEpoch.toString();
 
@@ -544,19 +325,6 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
     }
   }
 
-  // void onTakePictureButtonPressed() {
-  //   takePicture().then((XFile file) {
-  //     if (mounted) {
-  //       setState(() {
-  //         imageFile = file;
-  //         videoController?.dispose();
-  //         videoController = null;
-  //       });
-  //       if (file != null) showInSnackBar('Picture saved to ${file.path}');
-  //     }
-  //   });
-  // }
-
   void onFlashModeButtonPressed() {
     if (_flashModeControlRowAnimationController.value == 1) {
       _flashModeControlRowAnimationController.reverse();
@@ -577,34 +345,12 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
     }
   }
 
-  // void onFocusModeButtonPressed() {
-  //   if (_focusModeControlRowAnimationController.value == 1) {
-  //     _focusModeControlRowAnimationController.reverse();
-  //   } else {
-  //     _focusModeControlRowAnimationController.forward();
-  //     _flashModeControlRowAnimationController.reverse();
-  //     _exposureModeControlRowAnimationController.reverse();
-  //   }
-  // }
-
   void onAudioModeButtonPressed() {
     enableAudio = !enableAudio;
     if (controller != null) {
       onNewCameraSelected(_cameraMode);
     }
   }
-
-  // void onCaptureOrientationLockButtonPressed() async {
-  //   if (controller != null) {
-  //     if (controller.value.isCaptureOrientationLocked) {
-  //       await controller.unlockCaptureOrientation();
-  //       showInSnackBar('Capture orientation unlocked');
-  //     } else {
-  //       await controller.lockCaptureOrientation();
-  //       showInSnackBar('Capture orientation locked to ${controller.value.lockedCaptureOrientation.toString().split('.').last}');
-  //     }
-  //   }
-  // }
 
   void onSetFlashModeButtonPressed(FlashMode mode) {
     setFlashMode(mode).then((_) {
@@ -619,13 +365,6 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
       showInSnackBar('Exposure mode set to ${mode.toString().split('.').last}');
     });
   }
-
-  // void onSetFocusModeButtonPressed(FocusMode mode) {
-  //   setFocusMode(mode).then((_) {
-  //     if (mounted) setState(() {});
-  //     showInSnackBar('Focus mode set to ${mode.toString().split('.').last}');
-  //   });
-  // }
 
   void onVideoRecordButtonPressed() {
     _startTimer();
@@ -652,8 +391,6 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
 
   void onPauseButtonPressed() {
     _timer.cancel();
-    // starts.add(_lasttime);
-    // _totalTime += _lasttime;
     pauseVideoRecording().then((_) {
       if (mounted) setState(() {});
       showInSnackBar('Video recording paused');
@@ -756,15 +493,6 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
     }
   }
 
-  // Future<void> setFocusMode(FocusMode mode) async {
-  //   try {
-  //     await controller.setFocusMode(mode);
-  //   } on CameraException catch (e) {
-  //     _showCameraException(e);
-  //     rethrow;
-  //   }
-  // }
-
   Future<void> _startVideoPlayer() async {
     final VideoPlayerController vController = VideoPlayerController.file(File(videoFile.path));
     videoPlayerListener = () {
@@ -787,26 +515,6 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
     await vController.play();
   }
 
-  // Future<XFile> takePicture() async {
-  //   if (!controller.value.isInitialized) {
-  //     showInSnackBar('Error: select a camera first.');
-  //     return null;
-  //   }
-
-  //   if (controller.value.isTakingPicture) {
-  //     // A capture is already pending, do nothing.
-  //     return null;
-  //   }
-
-  //   try {
-  //     XFile file = await controller.takePicture();
-  //     return file;
-  //   } on CameraException catch (e) {
-  //     _showCameraException(e);
-  //     return null;
-  //   }
-  // }
-
   void _showCameraException(CameraException e) {
     logError(e.code, e.description);
     showInSnackBar('Error: ${e.code}\n${e.description}');
@@ -819,25 +527,6 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
     return Scaffold(
       backgroundColor: Colors.transparent,
       key: _scaffoldKey,
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () {
-      //     if (_cameraMode == 0)
-      //       _cameraMode = 1;
-      //     else
-      //       _cameraMode = 0;
-      //     setState(() {
-      //       onNewCameraSelected(_cameraMode);
-      //     });
-      //   },
-      //   child: _cameraMode == 0
-      //       ? Icon(
-      //           Icons.camera_rear_outlined,
-      //         )
-      //       : Icon(
-      //           Icons.camera_front_outlined,
-      //         ),
-      // ),
-
       body: Stack(
         children: [
           Column(
@@ -848,36 +537,8 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
                   child: _cameraPreviewWidget(),
                 ),
               ),
-              // _captureControlRowWidget(),
-              // _modeControlRowWidget(),
-              // Padding(
-              //   padding: const EdgeInsets.all(0.0),
-              //   child: Row(
-              //     mainAxisAlignment: MainAxisAlignment.start,
-              //     children: <Widget>[
-              //       // _cameraTogglesRowWidget(),
-              //       _thumbnailWidget(),
-              //     ],
-              //   ),
-              // ),
             ],
           ),
-
-          // Container(
-          //   color: Colors.transparent,
-          //   height: 50,
-          //   width: screenwidth,
-          //   child: SingleChildScrollView(
-          //     scrollDirection: Axis.horizontal,
-          //     child: Row(
-          //       children: [
-          //         _captureControlRowWidget(),
-          //         _modeControlRowWidget(),
-          //       ],
-          //     ),
-          //   ),
-          // ),
-
           Padding(
             padding: EdgeInsets.only(bottom: 40),
             child: Align(
