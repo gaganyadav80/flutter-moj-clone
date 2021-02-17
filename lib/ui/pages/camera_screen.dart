@@ -1,13 +1,9 @@
 import 'dart:async';
 import 'dart:io';
-
-import 'package:edverhub_video_editor/main.dart';
-import 'package:edverhub_video_editor/ui/components/camera_icons.dart';
+import 'package:edverhub_video_editor/ui/components/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'package:flutter_ffmpeg/ffmpeg_execution.dart';
-import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:logger/logger.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../utils.dart';
@@ -27,13 +23,14 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
   List<String> chipList = [
     "0.3x",
     "0.5x",
-    "1x",
-    "2x",
-    "3x",
+    " 1x ",
+    " 2x ",
+    " 3x ",
   ];
   Timer _timer;
   int videoSpeed = 1;
-  int _seconds = 30;
+  int _lasttime = 0;
+  int _totalTime = 0;
   int _cStart = 0;
   int _cEnd = 0;
   CameraController controller;
@@ -57,16 +54,20 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
   double _baseScale = 1.0;
   List<CameraDescription> cameras;
   int _cameraMode = 0;
+  List<List<int>> totallasttime = [];
+  List<List<int>> trimtimes = [];
+  Color iconsColor = Colors.white;
   // Counting pointers (number of user fingers on screen)
   int _pointers = 0;
   Future<void> _future;
+  double iconSize = 30;
   @override
   void initState() {
     super.initState();
     cameras = widget.cameras;
     controller = CameraController(
       cameras[0],
-      ResolutionPreset.medium,
+      ResolutionPreset.veryHigh,
       enableAudio: enableAudio,
       imageFormatGroup: ImageFormatGroup.jpeg,
     );
@@ -101,13 +102,14 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
   }
 
   _startTimer() {
-    _seconds = 30;
+    totallasttime.add([_totalTime, _lasttime]);
+    _lasttime = 0;
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       setState(() {
-        if (_seconds > 0) {
-          _seconds--;
+        if (_totalTime <= 30) {
+          _lasttime++;
+          _totalTime++;
         } else {
-          _timer.cancel();
           setState(() {
             onStopButtonPressed();
           });
@@ -143,12 +145,14 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
 
   Widget _cameraPreviewWidget() {
     if (controller == null || !controller.value.isInitialized) {
-      return const Text(
-        'Tap a camera',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 24.0,
-          fontWeight: FontWeight.w900,
+      return Center(
+        child: Text(
+          'Tap a camera',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24.0,
+            fontWeight: FontWeight.w900,
+          ),
         ),
       );
     } else {
@@ -228,7 +232,10 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
           mainAxisSize: MainAxisSize.max,
           children: <Widget>[
             IconButton(
-              icon: Icon(Icons.flash_on),
+              icon: Icon(
+                Icons.flash_on,
+                size: iconSize,
+              ),
               color: Colors.blue,
               onPressed: controller != null ? onFlashModeButtonPressed : null,
             ),
@@ -243,7 +250,10 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
             //   onPressed: controller != null ? onFocusModeButtonPressed : null,
             // ),
             IconButton(
-              icon: Icon(enableAudio ? Icons.volume_up : Icons.volume_mute),
+              icon: Icon(
+                enableAudio ? Icons.volume_up : Icons.volume_mute,
+                size: iconSize,
+              ),
               color: Colors.blue,
               onPressed: controller != null ? onAudioModeButtonPressed : null,
             ),
@@ -272,22 +282,34 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
             mainAxisSize: MainAxisSize.max,
             children: [
               IconButton(
-                icon: Icon(Icons.flash_off),
+                icon: Icon(
+                  Icons.flash_off,
+                  size: iconSize,
+                ),
                 color: controller?.value?.flashMode == FlashMode.off ? Colors.orange : Colors.white,
                 onPressed: controller != null ? () => onSetFlashModeButtonPressed(FlashMode.off) : null,
               ),
               IconButton(
-                icon: Icon(Icons.flash_auto),
+                icon: Icon(
+                  Icons.flash_auto,
+                  size: iconSize,
+                ),
                 color: controller?.value?.flashMode == FlashMode.auto ? Colors.orange : Colors.white,
                 onPressed: controller != null ? () => onSetFlashModeButtonPressed(FlashMode.auto) : null,
               ),
               IconButton(
-                icon: Icon(Icons.flash_on),
+                icon: Icon(
+                  Icons.flash_on,
+                  size: iconSize,
+                ),
                 color: controller?.value?.flashMode == FlashMode.always ? Colors.orange : Colors.white,
                 onPressed: controller != null ? () => onSetFlashModeButtonPressed(FlashMode.always) : null,
               ),
               IconButton(
-                icon: Icon(Icons.highlight),
+                icon: Icon(
+                  Icons.highlight,
+                  size: iconSize,
+                ),
                 color: controller?.value?.flashMode == FlashMode.torch ? Colors.orange : Colors.white,
                 onPressed: controller != null ? () => onSetFlashModeButtonPressed(FlashMode.torch) : null,
               ),
@@ -617,7 +639,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
     stopVideoRecording().then((file) {
       if (mounted)
         setState(() {
-          _seconds = 30;
+          _lasttime = 0;
         });
       if (file != null) {
         showInSnackBar('Video recorded to ${file.path}');
@@ -629,6 +651,9 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
   }
 
   void onPauseButtonPressed() {
+    _timer.cancel();
+    // starts.add(_lasttime);
+    // _totalTime += _lasttime;
     pauseVideoRecording().then((_) {
       if (mounted) setState(() {});
       showInSnackBar('Video recording paused');
@@ -636,6 +661,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
   }
 
   void onResumeButtonPressed() {
+    _startTimer();
     resumeVideoRecording().then((_) {
       if (mounted) setState(() {});
       showInSnackBar('Video recording resumed');
@@ -789,6 +815,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
   @override
   Widget build(BuildContext context) {
     initializeUtils(context);
+    final size = MediaQuery.of(context).size;
     return Scaffold(
       backgroundColor: Colors.transparent,
       key: _scaffoldKey,
@@ -810,12 +837,16 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
       //           Icons.camera_front_outlined,
       //         ),
       // ),
+
       body: Stack(
         children: [
           Column(
             children: <Widget>[
               Center(
-                child: _cameraPreviewWidget(),
+                child: Transform.scale(
+                  scale: controller.value.aspectRatio,
+                  child: _cameraPreviewWidget(),
+                ),
               ),
               // _captureControlRowWidget(),
               // _modeControlRowWidget(),
@@ -870,25 +901,31 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
                         height: 40,
                         width: 40,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Colors.transparent,
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                       GestureDetector(
                         onTap: () {
                           // if (_seconds <= 30) {}
-                          return controller != null && controller.value.isInitialized && !controller.value.isRecordingVideo ? onVideoRecordButtonPressed() : onStopButtonPressed();
+                          return controller != null && controller.value.isInitialized && !controller.value.isRecordingVideo
+                              ? onVideoRecordButtonPressed()
+                              : (controller.value.isRecordingPaused)
+                                  ? _totalTime < 30
+                                      ? onResumeButtonPressed()
+                                      : showInSnackBar('30 seconds Completed')
+                                  : onPauseButtonPressed();
                         },
                         child: CircleAvatar(
                           radius: 30,
-                          backgroundColor: controller.value.isRecordingVideo ? Colors.white : Colors.orange,
+                          backgroundColor: controller.value.isRecordingVideo && !controller.value.isRecordingPaused ? Colors.white : Colors.orange,
                         ),
                       ),
                       IconButton(
                         icon: Icon(
                           Icons.flip_camera_android_outlined,
                           color: Colors.white,
-                          size: 30,
+                          size: iconSize,
                         ),
                         onPressed: () {
                           if (_cameraMode == 0)
@@ -906,7 +943,6 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
               ),
             ),
           ),
-
           Align(
             alignment: Alignment.centerRight,
             child: Padding(
@@ -917,33 +953,71 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     IconButton(
-                      icon: Icon(Icons.cancel_presentation_outlined),
-                      color: Colors.orange,
-                      onPressed: () {},
+                      icon: Icon(
+                        Icons.cancel_presentation_outlined,
+                        size: iconSize,
+                      ),
+                      color: iconsColor,
+                      onPressed: () async {
+                        if (controller != null && controller.value.isInitialized && controller.value.isRecordingVideo) {
+                          if (controller.value.isRecordingPaused) {
+                            if (_totalTime == 0) {
+                              showInSnackBar('No clip to delete');
+                            } else {
+                              trimtimes.add([_totalTime - _lasttime, _totalTime]);
+                              _totalTime = _totalTime - _lasttime;
+                              _lasttime = totallasttime[totallasttime.length - 1][1];
+
+                              showInSnackBar('Clip deleted');
+                            }
+                          } else {
+                            showInSnackBar('You have to stop the video');
+                          }
+                        } else {
+                          showInSnackBar('You haven\'t recorded any clip yet');
+                        }
+                      },
                     ),
                     IconButton(
-                      icon: Icon(enableAudio ? Icons.volume_up : Icons.volume_off),
-                      color: Colors.orange,
+                      icon: Icon(
+                        enableAudio ? Icons.volume_up : Icons.volume_off,
+                        size: iconSize,
+                      ),
+                      color: iconsColor,
                       onPressed: controller != null ? onAudioModeButtonPressed : null,
                     ),
                     IconButton(
-                      icon: Icon(Icons.flash_on),
-                      color: Colors.orange,
+                      icon: Icon(
+                        Icons.flash_on,
+                        size: iconSize,
+                      ),
+                      color: iconsColor,
                       onPressed: controller != null ? onFlashModeButtonPressed : null,
                     ),
                     _flashModeControlRowWidget(),
+                    IconButton(
+                      icon: Icon(
+                        Icons.done,
+                        size: iconSize,
+                      ),
+                      color: iconsColor,
+                      onPressed: () {},
+                    ),
                   ],
                 ),
               ),
             ),
           ),
           Align(
-            alignment: Alignment.centerLeft,
+            alignment: Alignment.topLeft,
             child: Padding(
               padding: EdgeInsets.all(8.0),
               child: IconButton(
-                icon: Icon(Icons.cancel_outlined),
-                color: Colors.orange,
+                icon: Icon(
+                  Icons.cancel_outlined,
+                  size: iconSize,
+                ),
+                color: iconsColor,
                 onPressed: () {
                   print('cancel pressed');
                   if (controller != null && controller.value.isInitialized) {
@@ -954,12 +1028,6 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
                       return onStopButtonPressed();
                     }
                   } else {
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //     builder: (context) => ChooseScreen(),
-                    //   ),
-                    // );
                     Navigator.of(context).pop();
                   }
                 },
@@ -969,29 +1037,14 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: LinearProgressIndicator(
-              backgroundColor: Colors.orange,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.deepOrange),
-              value: ((30 - _seconds) / 30).toDouble(),
+              backgroundColor: iconsColor,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+              value: ((_totalTime) / 30).toDouble(),
             ),
           ),
         ],
       ),
     );
-    // return Scaffold(
-    //   body: Stack(
-    //     children: [
-    //       Expanded(
-    //         child: _cameraPreviewWidget(),
-    //       ),
-    //       // Positioned(
-    //       //   child: IconButton(
-    //       //     icon: Icon(),
-    //       //     onPressed: onPressed,
-    //       //   ),
-    //       // ),
-    //     ],
-    //   ),
-    // );
   }
 }
 
@@ -1012,24 +1065,33 @@ class _ChoiceChipWidgetState extends State<ChoiceChipWidget> {
   _buildChoiceList() {
     List<Widget> choices = List();
     widget.reportList.forEach((item) {
-      choices.add(ChoiceChip(
-        label: Text(item),
-        labelStyle: TextStyle(
-          color: Colors.black,
-          fontSize: 14.0,
-          fontWeight: FontWeight.bold,
+      choices.add(Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: 2,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(5.0),
+        child: ChoiceChip(
+          label: Text(item),
+          labelStyle: TextStyle(
+            color: Colors.black,
+            fontSize: 14.0,
+            fontWeight: FontWeight.bold,
+          ),
+          padding: EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 10,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(5.0),
+          ),
+          backgroundColor: Color(0xffededed),
+          selectedColor: Color(0xffffc107),
+          selected: selectedChoice == item,
+          onSelected: (selected) {
+            setState(() {
+              selectedChoice = item;
+            });
+          },
         ),
-        backgroundColor: Color(0xffededed),
-        selectedColor: Color(0xffffc107),
-        selected: selectedChoice == item,
-        onSelected: (selected) {
-          setState(() {
-            selectedChoice = item;
-          });
-        },
       ));
     });
     return choices;
@@ -1037,11 +1099,8 @@ class _ChoiceChipWidgetState extends State<ChoiceChipWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      child: Wrap(
-        children: _buildChoiceList(),
-      ),
+    return Wrap(
+      children: _buildChoiceList(),
     );
   }
 }

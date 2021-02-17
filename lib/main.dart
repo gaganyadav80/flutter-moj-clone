@@ -1,13 +1,9 @@
 import 'dart:async';
-import 'dart:io';
-
 import 'package:camera/camera.dart';
 import 'package:edverhub_video_editor/ui/pages/camera_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:video_player/video_player.dart';
 import 'ui/pages/edit_video_screen.dart';
-import 'utils.dart';
 
 List<CameraDescription> cameras = [];
 
