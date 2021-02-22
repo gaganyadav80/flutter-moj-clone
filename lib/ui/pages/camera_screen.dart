@@ -522,7 +522,6 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
 
   @override
   Widget build(BuildContext context) {
-    initializeUtils(context);
     final size = MediaQuery.of(context).size;
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -688,9 +687,8 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
                     if (controller.value.isRecordingPaused) {
                       return onStopButtonPressed();
                     }
-                  } else {
-                    Navigator.of(context).pop();
                   }
+                  Navigator.of(context).pop();
                 },
               ),
             ),
@@ -721,7 +719,7 @@ class ChoiceChipWidget extends StatefulWidget {
 }
 
 class _ChoiceChipWidgetState extends State<ChoiceChipWidget> {
-  String selectedChoice = "";
+  String selectedChoice = " 1x ";
 
   _buildChoiceList() {
     List<Widget> choices = List();

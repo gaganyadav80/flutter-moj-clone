@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:camera/camera.dart';
 import 'package:edverhub_video_editor/ui/pages/camera_screen.dart';
+import 'package:edverhub_video_editor/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'ui/pages/edit_video_screen.dart';
@@ -43,6 +44,8 @@ class ChooseScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    initializeUtils(context);
+
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
