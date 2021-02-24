@@ -1,13 +1,9 @@
 import 'dart:async';
 import 'dart:io';
-
-import 'package:edverhub_video_editor/main.dart';
-import 'package:edverhub_video_editor/ui/components/camera_icons.dart';
+import 'package:edverhub_video_editor/ui/components/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'package:flutter_ffmpeg/ffmpeg_execution.dart';
-import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:logger/logger.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../utils.dart';
@@ -27,13 +23,14 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
   List<String> chipList = [
     "0.3x",
     "0.5x",
-    "1x",
-    "2x",
-    "3x",
+    " 1x ",
+    " 2x ",
+    " 3x ",
   ];
   Timer _timer;
   int videoSpeed = 1;
-  int _seconds = 30;
+  int _lasttime = 0;
+  int _totalTime = 0;
   int _cStart = 0;
   int _cEnd = 0;
   CameraController controller;
@@ -57,16 +54,20 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
   double _baseScale = 1.0;
   List<CameraDescription> cameras;
   int _cameraMode = 0;
+  List<List<int>> totallasttime = [];
+  List<List<int>> trimtimes = [];
+  Color iconsColor = Colors.white;
   // Counting pointers (number of user fingers on screen)
   int _pointers = 0;
   Future<void> _future;
+  double iconSize = 30;
   @override
   void initState() {
     super.initState();
     cameras = widget.cameras;
     controller = CameraController(
       cameras[0],
-      ResolutionPreset.medium,
+      ResolutionPreset.veryHigh,
       enableAudio: enableAudio,
       imageFormatGroup: ImageFormatGroup.jpeg,
     );
@@ -101,13 +102,14 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
   }
 
   _startTimer() {
-    _seconds = 30;
+    totallasttime.add([_totalTime, _lasttime]);
+    _lasttime = 0;
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       setState(() {
-        if (_seconds > 0) {
-          _seconds--;
+        if (_totalTime <= 30) {
+          _lasttime++;
+          _totalTime++;
         } else {
-          _timer.cancel();
           setState(() {
             onStopButtonPressed();
           });
@@ -143,12 +145,14 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
 
   Widget _cameraPreviewWidget() {
     if (controller == null || !controller.value.isInitialized) {
-      return const Text(
-        'Tap a camera',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 24.0,
-          fontWeight: FontWeight.w900,
+      return Center(
+        child: Text(
+          'Tap a camera',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24.0,
+            fontWeight: FontWeight.w900,
+          ),
         ),
       );
     } else {
@@ -219,48 +223,6 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
     );
   }
 
-  /// Display a bar with buttons to change the flash and exposure modes
-  Widget _modeControlRowWidget() {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          mainAxisSize: MainAxisSize.max,
-          children: <Widget>[
-            IconButton(
-              icon: Icon(Icons.flash_on),
-              color: Colors.blue,
-              onPressed: controller != null ? onFlashModeButtonPressed : null,
-            ),
-            // IconButton(
-            //   icon: Icon(Icons.exposure),
-            //   color: Colors.blue,
-            //   onPressed: controller != null ? onExposureModeButtonPressed : null,
-            // ),
-            // IconButton(
-            //   icon: Icon(Icons.filter_center_focus),
-            //   color: Colors.blue,
-            //   onPressed: controller != null ? onFocusModeButtonPressed : null,
-            // ),
-            IconButton(
-              icon: Icon(enableAudio ? Icons.volume_up : Icons.volume_mute),
-              color: Colors.blue,
-              onPressed: controller != null ? onAudioModeButtonPressed : null,
-            ),
-            // IconButton(
-            //   icon: Icon(controller?.value?.isCaptureOrientationLocked ?? false ? Icons.screen_lock_rotation : Icons.screen_rotation),
-            //   color: Colors.blue,
-            //   onPressed: controller != null ? onCaptureOrientationLockButtonPressed : null,
-            // ),
-          ],
-        ),
-        _flashModeControlRowWidget(),
-        // _exposureModeControlRowWidget(),
-        // _focusModeControlRowWidget(),
-      ],
-    );
-  }
-
   Widget _flashModeControlRowWidget() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -272,22 +234,34 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
             mainAxisSize: MainAxisSize.max,
             children: [
               IconButton(
-                icon: Icon(Icons.flash_off),
+                icon: Icon(
+                  Icons.flash_off,
+                  size: iconSize,
+                ),
                 color: controller?.value?.flashMode == FlashMode.off ? Colors.orange : Colors.white,
                 onPressed: controller != null ? () => onSetFlashModeButtonPressed(FlashMode.off) : null,
               ),
               IconButton(
-                icon: Icon(Icons.flash_auto),
+                icon: Icon(
+                  Icons.flash_auto,
+                  size: iconSize,
+                ),
                 color: controller?.value?.flashMode == FlashMode.auto ? Colors.orange : Colors.white,
                 onPressed: controller != null ? () => onSetFlashModeButtonPressed(FlashMode.auto) : null,
               ),
               IconButton(
-                icon: Icon(Icons.flash_on),
+                icon: Icon(
+                  Icons.flash_on,
+                  size: iconSize,
+                ),
                 color: controller?.value?.flashMode == FlashMode.always ? Colors.orange : Colors.white,
                 onPressed: controller != null ? () => onSetFlashModeButtonPressed(FlashMode.always) : null,
               ),
               IconButton(
-                icon: Icon(Icons.highlight),
+                icon: Icon(
+                  Icons.highlight,
+                  size: iconSize,
+                ),
                 color: controller?.value?.flashMode == FlashMode.torch ? Colors.orange : Colors.white,
                 onPressed: controller != null ? () => onSetFlashModeButtonPressed(FlashMode.torch) : null,
               ),
@@ -297,177 +271,6 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
       ),
     );
   }
-
-  // Widget _exposureModeControlRowWidget() {
-  //   final ButtonStyle styleAuto = TextButton.styleFrom(
-  //     primary: controller?.value?.exposureMode == ExposureMode.auto ? Colors.orange : Colors.blue,
-  //   );
-  //   final ButtonStyle styleLocked = TextButton.styleFrom(
-  //     primary: controller?.value?.exposureMode == ExposureMode.locked ? Colors.orange : Colors.blue,
-  //   );
-
-  //   return SingleChildScrollView(
-  //     scrollDirection: Axis.horizontal,
-  //     child: SizeTransition(
-  //       sizeFactor: _exposureModeControlRowAnimation,
-  //       child: ClipRect(
-  //         child: Container(
-  //           color: Colors.grey.shade50,
-  //           child: Column(
-  //             children: [
-  //               Center(
-  //                 child: Text("Exposure Mode"),
-  //               ),
-  //               Row(
-  //                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-  //                 mainAxisSize: MainAxisSize.max,
-  //                 children: [
-  //                   TextButton(
-  //                     child: Text('AUTO'),
-  //                     style: styleAuto,
-  //                     onPressed: controller != null ? () => onSetExposureModeButtonPressed(ExposureMode.auto) : null,
-  //                     onLongPress: () {
-  //                       if (controller != null) controller.setExposurePoint(null);
-  //                       showInSnackBar('Resetting exposure point');
-  //                     },
-  //                   ),
-  //                   TextButton(
-  //                     child: Text('LOCKED'),
-  //                     style: styleLocked,
-  //                     onPressed: controller != null ? () => onSetExposureModeButtonPressed(ExposureMode.locked) : null,
-  //                   ),
-  //                 ],
-  //               ),
-  //               Center(
-  //                 child: Text("Exposure Offset"),
-  //               ),
-  //               Row(
-  //                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-  //                 mainAxisSize: MainAxisSize.max,
-  //                 children: [
-  //                   Text(_minAvailableExposureOffset.toString()),
-  //                   Slider(
-  //                     value: _currentExposureOffset,
-  //                     min: _minAvailableExposureOffset,
-  //                     max: _maxAvailableExposureOffset,
-  //                     label: _currentExposureOffset.toString(),
-  //                     onChanged: _minAvailableExposureOffset == _maxAvailableExposureOffset ? null : setExposureOffset,
-  //                   ),
-  //                   Text(_maxAvailableExposureOffset.toString()),
-  //                 ],
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // Widget _focusModeControlRowWidget() {
-  //   final ButtonStyle styleAuto = TextButton.styleFrom(
-  //     primary: controller?.value?.focusMode == FocusMode.auto ? Colors.orange : Colors.blue,
-  //   );
-  //   final ButtonStyle styleLocked = TextButton.styleFrom(
-  //     primary: controller?.value?.focusMode == FocusMode.locked ? Colors.orange : Colors.blue,
-  //   );
-
-  //   return SingleChildScrollView(
-  //     scrollDirection: Axis.horizontal,
-  //     child: SizeTransition(
-  //       sizeFactor: _focusModeControlRowAnimation,
-  //       child: ClipRect(
-  //         child: Container(
-  //           color: Colors.grey.shade50,
-  //           child: Column(
-  //             children: [
-  //               Center(
-  //                 child: Text("Focus Mode"),
-  //               ),
-  //               Row(
-  //                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-  //                 mainAxisSize: MainAxisSize.max,
-  //                 children: [
-  //                   TextButton(
-  //                     child: Text('AUTO'),
-  //                     style: styleAuto,
-  //                     onPressed: controller != null ? () => onSetFocusModeButtonPressed(FocusMode.auto) : null,
-  //                     onLongPress: () {
-  //                       if (controller != null) controller.setFocusPoint(null);
-  //                       showInSnackBar('Resetting focus point');
-  //                     },
-  //                   ),
-  //                   TextButton(
-  //                     child: Text('LOCKED'),
-  //                     style: styleLocked,
-  //                     onPressed: controller != null ? () => onSetFocusModeButtonPressed(FocusMode.locked) : null,
-  //                   ),
-  //                 ],
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // /// Display the control bar with buttons to take pictures and record videos.
-  // Widget _captureControlRowWidget() {
-  //   return Row(
-  //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-  //     mainAxisSize: MainAxisSize.max,
-  //     children: <Widget>[
-  //       // IconButton(
-  //       //   icon: const Icon(Icons.camera_alt),
-  //       //   color: Colors.white,
-  //       //   onPressed: controller != null && controller.value.isInitialized && !controller.value.isRecordingVideo ? onTakePictureButtonPressed : null,
-  //       // ),
-  //       IconButton(
-  //         icon: Icon(Icons.videocam),
-  //         color: Colors.white,
-  //         onPressed: controller != null && controller.value.isInitialized && !controller.value.isRecordingVideo ? onVideoRecordButtonPressed : null,
-  //       ),
-  //       // IconButton(
-  //       //   icon: controller != null && controller.value.isRecordingPaused ? Icon(Icons.play_arrow) : Icon(Icons.pause),
-  //       //   color: Colors.white,
-  //       //   onPressed: controller != null && controller.value.isInitialized && controller.value.isRecordingVideo
-  //       //       ? (controller != null && controller.value.isRecordingPaused ? onResumeButtonPressed : onPauseButtonPressed)
-  //       //       : null,
-  //       // ),
-  //       IconButton(
-  //         icon: Icon(Icons.stop),
-  //         color: Colors.white,
-  //         onPressed: controller != null && controller.value.isInitialized && controller.value.isRecordingVideo ? onStopButtonPressed : null,
-  //       )
-  //     ],
-  //   );
-  // }
-
-  /// Display a row of toggle to select the camera (or a message if no camera is available).
-  // Widget _cameraTogglesRowWidget() {
-  //   final List<Widget> toggles = <Widget>[];
-
-  //   if (cameras.isEmpty) {
-  //     return const Text('No camera found');
-  //   } else {
-  //     for (CameraDescription cameraDescription in cameras) {
-  //       toggles.add(
-  //         SizedBox(
-  //           width: 90.0,
-  //           child: RadioListTile<CameraDescription>(
-  //             title: Icon(getCameraLensIcon(cameraDescription.lensDirection)),
-  //             groupValue: controller?.description,
-  //             value: cameraDescription,
-  //             onChanged: controller != null && controller.value.isRecordingVideo ? null : onNewCameraSelected,
-  //           ),
-  //         ),
-  //       );
-  //     }
-  //   }
-
-  //   return Row(children: toggles);
-  // }
 
   String timestamp() => DateTime.now().millisecondsSinceEpoch.toString();
 
@@ -522,19 +325,6 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
     }
   }
 
-  // void onTakePictureButtonPressed() {
-  //   takePicture().then((XFile file) {
-  //     if (mounted) {
-  //       setState(() {
-  //         imageFile = file;
-  //         videoController?.dispose();
-  //         videoController = null;
-  //       });
-  //       if (file != null) showInSnackBar('Picture saved to ${file.path}');
-  //     }
-  //   });
-  // }
-
   void onFlashModeButtonPressed() {
     if (_flashModeControlRowAnimationController.value == 1) {
       _flashModeControlRowAnimationController.reverse();
@@ -555,34 +345,12 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
     }
   }
 
-  // void onFocusModeButtonPressed() {
-  //   if (_focusModeControlRowAnimationController.value == 1) {
-  //     _focusModeControlRowAnimationController.reverse();
-  //   } else {
-  //     _focusModeControlRowAnimationController.forward();
-  //     _flashModeControlRowAnimationController.reverse();
-  //     _exposureModeControlRowAnimationController.reverse();
-  //   }
-  // }
-
   void onAudioModeButtonPressed() {
     enableAudio = !enableAudio;
     if (controller != null) {
       onNewCameraSelected(_cameraMode);
     }
   }
-
-  // void onCaptureOrientationLockButtonPressed() async {
-  //   if (controller != null) {
-  //     if (controller.value.isCaptureOrientationLocked) {
-  //       await controller.unlockCaptureOrientation();
-  //       showInSnackBar('Capture orientation unlocked');
-  //     } else {
-  //       await controller.lockCaptureOrientation();
-  //       showInSnackBar('Capture orientation locked to ${controller.value.lockedCaptureOrientation.toString().split('.').last}');
-  //     }
-  //   }
-  // }
 
   void onSetFlashModeButtonPressed(FlashMode mode) {
     setFlashMode(mode).then((_) {
@@ -598,13 +366,6 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
     });
   }
 
-  // void onSetFocusModeButtonPressed(FocusMode mode) {
-  //   setFocusMode(mode).then((_) {
-  //     if (mounted) setState(() {});
-  //     showInSnackBar('Focus mode set to ${mode.toString().split('.').last}');
-  //   });
-  // }
-
   void onVideoRecordButtonPressed() {
     _startTimer();
     startVideoRecording().then((_) {
@@ -617,7 +378,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
     stopVideoRecording().then((file) {
       if (mounted)
         setState(() {
-          _seconds = 30;
+          _lasttime = 0;
         });
       if (file != null) {
         showInSnackBar('Video recorded to ${file.path}');
@@ -629,6 +390,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
   }
 
   void onPauseButtonPressed() {
+    _timer.cancel();
     pauseVideoRecording().then((_) {
       if (mounted) setState(() {});
       showInSnackBar('Video recording paused');
@@ -636,6 +398,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
   }
 
   void onResumeButtonPressed() {
+    _startTimer();
     resumeVideoRecording().then((_) {
       if (mounted) setState(() {});
       showInSnackBar('Video recording resumed');
@@ -730,15 +493,6 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
     }
   }
 
-  // Future<void> setFocusMode(FocusMode mode) async {
-  //   try {
-  //     await controller.setFocusMode(mode);
-  //   } on CameraException catch (e) {
-  //     _showCameraException(e);
-  //     rethrow;
-  //   }
-  // }
-
   Future<void> _startVideoPlayer() async {
     final VideoPlayerController vController = VideoPlayerController.file(File(videoFile.path));
     videoPlayerListener = () {
@@ -761,26 +515,6 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
     await vController.play();
   }
 
-  // Future<XFile> takePicture() async {
-  //   if (!controller.value.isInitialized) {
-  //     showInSnackBar('Error: select a camera first.');
-  //     return null;
-  //   }
-
-  //   if (controller.value.isTakingPicture) {
-  //     // A capture is already pending, do nothing.
-  //     return null;
-  //   }
-
-  //   try {
-  //     XFile file = await controller.takePicture();
-  //     return file;
-  //   } on CameraException catch (e) {
-  //     _showCameraException(e);
-  //     return null;
-  //   }
-  // }
-
   void _showCameraException(CameraException e) {
     logError(e.code, e.description);
     showInSnackBar('Error: ${e.code}\n${e.description}');
@@ -788,65 +522,22 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
 
   @override
   Widget build(BuildContext context) {
-    initializeUtils(context);
+    final size = MediaQuery.of(context).size;
     return Scaffold(
       backgroundColor: Colors.transparent,
       key: _scaffoldKey,
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () {
-      //     if (_cameraMode == 0)
-      //       _cameraMode = 1;
-      //     else
-      //       _cameraMode = 0;
-      //     setState(() {
-      //       onNewCameraSelected(_cameraMode);
-      //     });
-      //   },
-      //   child: _cameraMode == 0
-      //       ? Icon(
-      //           Icons.camera_rear_outlined,
-      //         )
-      //       : Icon(
-      //           Icons.camera_front_outlined,
-      //         ),
-      // ),
       body: Stack(
         children: [
           Column(
             children: <Widget>[
               Center(
-                child: _cameraPreviewWidget(),
+                child: Transform.scale(
+                  scale: controller.value.aspectRatio,
+                  child: _cameraPreviewWidget(),
+                ),
               ),
-              // _captureControlRowWidget(),
-              // _modeControlRowWidget(),
-              // Padding(
-              //   padding: const EdgeInsets.all(0.0),
-              //   child: Row(
-              //     mainAxisAlignment: MainAxisAlignment.start,
-              //     children: <Widget>[
-              //       // _cameraTogglesRowWidget(),
-              //       _thumbnailWidget(),
-              //     ],
-              //   ),
-              // ),
             ],
           ),
-
-          // Container(
-          //   color: Colors.transparent,
-          //   height: 50,
-          //   width: screenwidth,
-          //   child: SingleChildScrollView(
-          //     scrollDirection: Axis.horizontal,
-          //     child: Row(
-          //       children: [
-          //         _captureControlRowWidget(),
-          //         _modeControlRowWidget(),
-          //       ],
-          //     ),
-          //   ),
-          // ),
-
           Padding(
             padding: EdgeInsets.only(bottom: 40),
             child: Align(
@@ -870,25 +561,31 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
                         height: 40,
                         width: 40,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Colors.transparent,
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                       GestureDetector(
                         onTap: () {
                           // if (_seconds <= 30) {}
-                          return controller != null && controller.value.isInitialized && !controller.value.isRecordingVideo ? onVideoRecordButtonPressed() : onStopButtonPressed();
+                          return controller != null && controller.value.isInitialized && !controller.value.isRecordingVideo
+                              ? onVideoRecordButtonPressed()
+                              : (controller.value.isRecordingPaused)
+                                  ? _totalTime < 30
+                                      ? onResumeButtonPressed()
+                                      : showInSnackBar('30 seconds Completed')
+                                  : onPauseButtonPressed();
                         },
                         child: CircleAvatar(
                           radius: 30,
-                          backgroundColor: controller.value.isRecordingVideo ? Colors.white : Colors.orange,
+                          backgroundColor: controller.value.isRecordingVideo && !controller.value.isRecordingPaused ? Colors.white : Colors.orange,
                         ),
                       ),
                       IconButton(
                         icon: Icon(
                           Icons.flip_camera_android_outlined,
                           color: Colors.white,
-                          size: 30,
+                          size: iconSize,
                         ),
                         onPressed: () {
                           if (_cameraMode == 0)
@@ -906,7 +603,6 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
               ),
             ),
           ),
-
           Align(
             alignment: Alignment.centerRight,
             child: Padding(
@@ -917,33 +613,71 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     IconButton(
-                      icon: Icon(Icons.cancel_presentation_outlined),
-                      color: Colors.orange,
-                      onPressed: () {},
+                      icon: Icon(
+                        Icons.cancel_presentation_outlined,
+                        size: iconSize,
+                      ),
+                      color: iconsColor,
+                      onPressed: () async {
+                        if (controller != null && controller.value.isInitialized && controller.value.isRecordingVideo) {
+                          if (controller.value.isRecordingPaused) {
+                            if (_totalTime == 0) {
+                              showInSnackBar('No clip to delete');
+                            } else {
+                              trimtimes.add([_totalTime - _lasttime, _totalTime]);
+                              _totalTime = _totalTime - _lasttime;
+                              _lasttime = totallasttime[totallasttime.length - 1][1];
+
+                              showInSnackBar('Clip deleted');
+                            }
+                          } else {
+                            showInSnackBar('You have to stop the video');
+                          }
+                        } else {
+                          showInSnackBar('You haven\'t recorded any clip yet');
+                        }
+                      },
                     ),
                     IconButton(
-                      icon: Icon(enableAudio ? Icons.volume_up : Icons.volume_off),
-                      color: Colors.orange,
+                      icon: Icon(
+                        enableAudio ? Icons.volume_up : Icons.volume_off,
+                        size: iconSize,
+                      ),
+                      color: iconsColor,
                       onPressed: controller != null ? onAudioModeButtonPressed : null,
                     ),
                     IconButton(
-                      icon: Icon(Icons.flash_on),
-                      color: Colors.orange,
+                      icon: Icon(
+                        Icons.flash_on,
+                        size: iconSize,
+                      ),
+                      color: iconsColor,
                       onPressed: controller != null ? onFlashModeButtonPressed : null,
                     ),
                     _flashModeControlRowWidget(),
+                    IconButton(
+                      icon: Icon(
+                        Icons.done,
+                        size: iconSize,
+                      ),
+                      color: iconsColor,
+                      onPressed: () {},
+                    ),
                   ],
                 ),
               ),
             ),
           ),
           Align(
-            alignment: Alignment.centerLeft,
+            alignment: Alignment.topLeft,
             child: Padding(
               padding: EdgeInsets.all(8.0),
               child: IconButton(
-                icon: Icon(Icons.cancel_outlined),
-                color: Colors.orange,
+                icon: Icon(
+                  Icons.cancel_outlined,
+                  size: iconSize,
+                ),
+                color: iconsColor,
                 onPressed: () {
                   print('cancel pressed');
                   if (controller != null && controller.value.isInitialized) {
@@ -953,15 +687,8 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
                     if (controller.value.isRecordingPaused) {
                       return onStopButtonPressed();
                     }
-                  } else {
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //     builder: (context) => ChooseScreen(),
-                    //   ),
-                    // );
-                    Navigator.of(context).pop();
                   }
+                  Navigator.of(context).pop();
                 },
               ),
             ),
@@ -969,29 +696,14 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: LinearProgressIndicator(
-              backgroundColor: Colors.orange,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.deepOrange),
-              value: ((30 - _seconds) / 30).toDouble(),
+              backgroundColor: iconsColor,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+              value: ((_totalTime) / 30).toDouble(),
             ),
           ),
         ],
       ),
     );
-    // return Scaffold(
-    //   body: Stack(
-    //     children: [
-    //       Expanded(
-    //         child: _cameraPreviewWidget(),
-    //       ),
-    //       // Positioned(
-    //       //   child: IconButton(
-    //       //     icon: Icon(),
-    //       //     onPressed: onPressed,
-    //       //   ),
-    //       // ),
-    //     ],
-    //   ),
-    // );
   }
 }
 
@@ -1007,29 +719,38 @@ class ChoiceChipWidget extends StatefulWidget {
 }
 
 class _ChoiceChipWidgetState extends State<ChoiceChipWidget> {
-  String selectedChoice = "";
+  String selectedChoice = " 1x ";
 
   _buildChoiceList() {
     List<Widget> choices = List();
     widget.reportList.forEach((item) {
-      choices.add(ChoiceChip(
-        label: Text(item),
-        labelStyle: TextStyle(
-          color: Colors.black,
-          fontSize: 14.0,
-          fontWeight: FontWeight.bold,
+      choices.add(Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: 2,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(5.0),
+        child: ChoiceChip(
+          label: Text(item),
+          labelStyle: TextStyle(
+            color: Colors.black,
+            fontSize: 14.0,
+            fontWeight: FontWeight.bold,
+          ),
+          padding: EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 10,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(5.0),
+          ),
+          backgroundColor: Color(0xffededed),
+          selectedColor: Color(0xffffc107),
+          selected: selectedChoice == item,
+          onSelected: (selected) {
+            setState(() {
+              selectedChoice = item;
+            });
+          },
         ),
-        backgroundColor: Color(0xffededed),
-        selectedColor: Color(0xffffc107),
-        selected: selectedChoice == item,
-        onSelected: (selected) {
-          setState(() {
-            selectedChoice = item;
-          });
-        },
       ));
     });
     return choices;
@@ -1037,11 +758,8 @@ class _ChoiceChipWidgetState extends State<ChoiceChipWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      child: Wrap(
-        children: _buildChoiceList(),
-      ),
+    return Wrap(
+      children: _buildChoiceList(),
     );
   }
 }

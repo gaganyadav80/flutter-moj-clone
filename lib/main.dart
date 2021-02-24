@@ -1,9 +1,8 @@
 import 'dart:async';
-import 'dart:io';
-
 import 'package:camera/camera.dart';
 import 'package:chewie/chewie.dart';
 import 'package:edverhub_video_editor/ui/pages/camera_screen.dart';
+import 'package:edverhub_video_editor/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -72,6 +71,8 @@ class _ChooseScreenState extends State<ChooseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    initializeUtils(context);
+
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
