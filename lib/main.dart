@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:chewie/chewie.dart';
 import 'package:edverhub_video_editor/ui/pages/camera_screen.dart';
