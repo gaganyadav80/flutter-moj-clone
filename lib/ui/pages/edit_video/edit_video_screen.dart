@@ -1,8 +1,12 @@
 import 'dart:io';
 
 import 'package:chewie/chewie.dart';
+import 'package:edverhub_video_editor/ui/pages/edit_video/edit_video_models.dart';
+import 'package:edverhub_video_editor/ui/pages/edit_video/filters.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+
+import 'edit_video_widgets.dart';
 
 class EditVideoScreen extends StatefulWidget {
   EditVideoScreen({Key key, this.video, this.chewieController, this.videoPlayerController})
@@ -16,12 +20,13 @@ class EditVideoScreen extends StatefulWidget {
   final ChewieController chewieController;
 
   @override
-  _EditVideoScreenState createState() => _EditVideoScreenState();
+  EditVideoScreenState createState() => EditVideoScreenState();
 }
 
-class _EditVideoScreenState extends State<EditVideoScreen> with TickerProviderStateMixin {
+class EditVideoScreenState extends State<EditVideoScreen> with TickerProviderStateMixin {
   AnimationController _animationController;
   bool isPlaying = true;
+  final TextEditingController textController = TextEditingController();
 
   void _handleOnPressed() {
     setState(() {
@@ -41,19 +46,48 @@ class _EditVideoScreenState extends State<EditVideoScreen> with TickerProviderSt
   }
 
   @override
+  void dispose() {
+    widget.chewieController.pause();
+    widget.chewieController.dispose();
+    currentFilterColor = FILTERS[0];
+    textController?.dispose();
+    textModelList.clear();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomPadding: false,
       body: Stack(
         clipBehavior: Clip.hardEdge,
         children: <Widget>[
           widget.videoPlayerController.value.initialized
-              ? AspectRatio(
-                  aspectRatio: widget.videoPlayerController.value.aspectRatio,
-                  child: Chewie(
-                    controller: widget.chewieController,
+              ? ColorFiltered(
+                  colorFilter:
+                      currentFilterColor.filterColor != null ? ColorFilter.mode(currentFilterColor.filterColor, currentFilterColor.blendMode) : ColorFilter.matrix(currentFilterColor.filterMatrix),
+                  child: Container(
+                    color: Colors.black,
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.height,
+                    child: Chewie(
+                      controller: widget.chewieController,
+                    ),
                   ),
                 )
               : Container(),
+          textModelList.isNotEmpty
+              ? Stack(
+                  children: textModelList
+                      .map((model) => Positioned(
+                            left: model.textModel.textOffset.dx,
+                            top: model.textModel.textOffset.dy,
+                            child: model,
+                          ))
+                      .toList(),
+                )
+              : SizedBox.shrink(),
           _buildBackButton(),
           _buildEffectsButtons(),
           _buildSoundTextButtons(),
@@ -142,15 +176,17 @@ class _EditVideoScreenState extends State<EditVideoScreen> with TickerProviderSt
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.movie_filter_outlined, size: 38.0, color: Colors.white),
-                    Text(
-                      "Filters",
-                      style: TextStyle(
-                        color: Colors.white,
-                      ),
-                    ),
+                    Text("Filters", style: TextStyle(color: Colors.white)),
                   ],
                 ),
-                onTap: () => print('filter pressed'),
+                onTap: () => showModalBottomSheet(
+                  context: context,
+                  backgroundColor: Colors.black,
+                  barrierColor: Colors.transparent,
+                  builder: (context) => FiltersModalSheet(
+                    editVideoScreenState: this,
+                  ),
+                ),
               ),
               SizedBox(height: 40.0),
               InkWell(
@@ -158,12 +194,7 @@ class _EditVideoScreenState extends State<EditVideoScreen> with TickerProviderSt
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.music_note_outlined, size: 38.0, color: Colors.white),
-                    Text(
-                      "Sound",
-                      style: TextStyle(
-                        color: Colors.white,
-                      ),
-                    ),
+                    Text("Sound", style: TextStyle(color: Colors.white)),
                   ],
                 ),
                 onTap: () => print('sound pressed'),
@@ -185,12 +216,7 @@ class _EditVideoScreenState extends State<EditVideoScreen> with TickerProviderSt
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.speed_outlined, size: 38.0, color: Colors.white),
-                    Text(
-                      "Speed",
-                      style: TextStyle(
-                        color: Colors.white,
-                      ),
-                    ),
+                    Text("Speed", style: TextStyle(color: Colors.white)),
                   ],
                 ),
                 onTap: () => print('speed pressed'),
@@ -201,15 +227,25 @@ class _EditVideoScreenState extends State<EditVideoScreen> with TickerProviderSt
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.text_fields_outlined, size: 38.0, color: Colors.white),
-                    Text(
-                      "Text",
-                      style: TextStyle(
-                        color: Colors.white,
-                      ),
-                    ),
+                    Text("Text", style: TextStyle(color: Colors.white)),
                   ],
                 ),
-                onTap: () => print('text pressed'),
+                onTap: () => showModalBottomSheet(
+                  context: context,
+                  isDismissible: true,
+                  isScrollControlled: true,
+                  useRootNavigator: true,
+                  backgroundColor: Colors.black.withOpacity(0.6),
+                  barrierColor: Colors.black.withOpacity(0.6),
+                  // shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25.0))),
+                  builder: (BuildContext context) => Padding(
+                    padding: MediaQuery.of(context).viewInsets,
+                    child: TextModalSheet(
+                      textController: textController,
+                      editVideoScreenState: this,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),

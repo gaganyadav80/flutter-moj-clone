@@ -8,8 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
-import 'ui/pages/edit_video_screen.dart';
-import 'utils.dart';
+import 'ui/pages/edit_video/edit_video_screen.dart';
 
 List<CameraDescription> cameras = [];
 
