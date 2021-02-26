@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:edverhub_video_editor/ui/components/logger.dart';
+import 'package:edverhub_video_editor/ui/pages/edit_video/edit_video_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
+// import 'package:gallery_saver/gallery_saver.dart';
 import 'package:logger/logger.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
-
-import '../../utils.dart';
 
 class CameraExampleHome extends StatefulWidget {
   final List<CameraDescription> cameras;
@@ -34,7 +37,6 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
   int _cStart = 0;
   int _cEnd = 0;
   CameraController controller;
-  XFile imageFile;
   XFile videoFile;
   VideoPlayerController videoController;
   VoidCallback videoPlayerListener;
@@ -192,36 +194,36 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
   }
 
   /// Display the thumbnail of the captured image or video.
-  Widget _thumbnailWidget() {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          //TODO: change
-          videoController == null && imageFile == null
-              ? Container()
-              : SizedBox(
-                  child: (videoController == null)
-                      ? Image.file(File(imageFile.path))
-                      : Container(
-                          child: Center(
-                            child: AspectRatio(
-                              aspectRatio: videoController.value.size != null ? videoController.value.aspectRatio : 1.0,
-                              child: VideoPlayer(
-                                videoController,
-                              ),
-                            ),
-                          ),
-                          decoration: BoxDecoration(border: Border.all(color: Colors.pink)),
-                        ),
-                  width: 64.0,
-                  height: 64.0,
-                ),
-        ],
-      ),
-    );
-  }
+  // Widget _thumbnailWidget() {
+  //   return Align(
+  //     alignment: Alignment.centerRight,
+  //     child: Row(
+  //       mainAxisSize: MainAxisSize.min,
+  //       children: <Widget>[
+  //         //TODO: change
+  //         videoController == null && imageFile == null
+  //             ? Container()
+  //             : SizedBox(
+  //                 child: (videoController == null)
+  //                     ? Image.file(File(imageFile.path))
+  //                     : Container(
+  //                         child: Center(
+  //                           child: AspectRatio(
+  //                             aspectRatio: videoController.value.size != null ? videoController.value.aspectRatio : 1.0,
+  //                             child: VideoPlayer(
+  //                               videoController,
+  //                             ),
+  //                           ),
+  //                         ),
+  //                         decoration: BoxDecoration(border: Border.all(color: Colors.pink)),
+  //                       ),
+  //                 width: 64.0,
+  //                 height: 64.0,
+  //               ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _flashModeControlRowWidget() {
     return SingleChildScrollView(
@@ -373,17 +375,17 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
     });
   }
 
-  void onStopButtonPressed() {
+  Future<void> onStopButtonPressed() async {
     _timer.cancel();
-    stopVideoRecording().then((file) {
+    await stopVideoRecording().then((file) {
       if (mounted)
         setState(() {
           _lasttime = 0;
         });
       if (file != null) {
         showInSnackBar('Video recorded to ${file.path}');
+        videoFile = file;
 
-        // videoFile = file;
         // _startVideoPlayer();
       }
     });
@@ -493,27 +495,39 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
     }
   }
 
-  Future<void> _startVideoPlayer() async {
-    final VideoPlayerController vController = VideoPlayerController.file(File(videoFile.path));
-    videoPlayerListener = () {
-      if (videoController != null && videoController.value.size != null) {
-        // Refreshing the state to update video player with the correct ratio.
-        if (mounted) setState(() {});
-        videoController.removeListener(videoPlayerListener);
+  Future<bool> _requestPermission(Permission permission) async {
+    if (await permission.isGranted) {
+      return true;
+    } else {
+      var result = await permission.request();
+      if (result == PermissionStatus.granted) {
+        return true;
+      } else {
+        return false;
       }
-    };
-    vController.addListener(videoPlayerListener);
-    await vController.setLooping(true);
-    await vController.initialize();
-    await videoController?.dispose();
-    if (mounted) {
-      setState(() {
-        imageFile = null;
-        videoController = vController;
-      });
     }
-    await vController.play();
   }
+  // Future<void> _startVideoPlayer() async {
+  //   final VideoPlayerController vController = VideoPlayerController.file(File(videoFile.path));
+  //   videoPlayerListener = () {
+  //     if (videoController != null && videoController.value.size != null) {
+  //       // Refreshing the state to update video player with the correct ratio.
+  //       if (mounted) setState(() {});
+  //       videoController.removeListener(videoPlayerListener);
+  //     }
+  //   };
+  //   vController.addListener(videoPlayerListener);
+  //   await vController.setLooping(true);
+  //   await vController.initialize();
+  //   await videoController?.dispose();
+  //   if (mounted) {
+  //     setState(() {
+  //       imageFile = null;
+  //       videoController = vController;
+  //     });
+  //   }
+  //   await vController.play();
+  // }
 
   void _showCameraException(CameraException e) {
     logError(e.code, e.description);
@@ -545,15 +559,15 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        ChoiceChipWidget(chipList),
-                      ],
-                    ),
-                  ),
+                  // Padding(
+                  //   padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                  //   child: Row(
+                  //     mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  //     children: [
+                  //       ChoiceChipWidget(chipList),
+                  //     ],
+                  //   ),
+                  // ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
@@ -661,7 +675,85 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
                         size: iconSize,
                       ),
                       color: iconsColor,
-                      onPressed: () {},
+                      onPressed: () async {
+                        await onStopButtonPressed();
+                        try {
+                          //TODO: delete clips and change speed
+                          // File _video = File(videoFile.path);
+                          String path = videoFile.path;
+                          final FlutterFFmpeg _flutterFFmpeg = FlutterFFmpeg();
+                          String startTime = "00:00:00";
+                          String endTime = "00:00:00";
+                          if (Platform.isAndroid) {
+                            if (await _requestPermission(Permission.storage)) {
+                              Directory directory;
+                              directory = await getExternalStorageDirectory();
+                              print(directory.path);
+                              String newPath = "";
+                              List<String> folders = directory.path.split("/");
+                              for (var x = 0; x < folders.length; x++) {
+                                String folder = folders[x];
+                                if (folder != "Android") {
+                                  newPath += "/" + folder;
+                                } else {
+                                  break;
+                                }
+                              }
+                              newPath = newPath + "/EdverhubVideo";
+                              directory = Directory(newPath);
+                              if (!await directory.exists()) {
+                                await directory.create(recursive: true);
+                              }
+                              if (await directory.exists()) {
+                                String curDate = DateTime.now().toString();
+                                File savedfile = File(directory.path + "/VIDEO-$curDate.mp4");
+                                String endPath = directory.path + "/VIDE.mp4";
+                                for (int i = trimtimes.length - 1; i >= 0; i--) {
+                                  if (trimtimes[i][0] / 10 == 0) {
+                                    startTime = "00:00:0${trimtimes[i][0]}";
+                                  } else {
+                                    startTime = "00:00:${trimtimes[i][0]}";
+                                  }
+                                  if (trimtimes[i][1] / 10 == 0) {
+                                    endTime = "00:00:0${trimtimes[i][1]}";
+                                  } else {
+                                    endTime = "00:00:${trimtimes[i][1]}";
+                                  }
+                                  // int x = await _flutterFFmpeg.execute("-i $path -ss $startTime -to $endTime -c:v copy -c:a copy $savedfile");
+                                  // int x = await _flutterFFmpeg.execute("-i $path -ss $startTime -to $endTime -c:v copy -c:a copy $endPath");
+                                  int x = await _flutterFFmpeg.execute("-i $path -ss $startTime -to $endTime -async 1 -c copy $endPath");
+
+                                  if (x == 0) {
+                                    logger.i("FFMPEG: Successful");
+                                  } else if (x == 255) {
+                                    logger.i("FFMPEG: User Cancel");
+                                  } else {
+                                    logger.i("FFMPEG: Something Else");
+                                  }
+                                }
+                              }
+                            }
+                          } else {}
+                          logger.wtf('Camera Screen Success');
+                          trimtimes = [];
+                          _totalTime = 0;
+                          _lasttime = 0;
+                          // await GallerySaver.saveVideo(
+                          //   videoFile.path,
+                          //   albumName: 'Edverhub Video',
+                          // ).then((value) => logger.w("Gallery Saver: $value"));
+                          // Navigator.of(context).push(
+                          //   MaterialPageRoute(builder: (BuildContext context) {
+                          //     return EditVideoScreen(
+                          //       video: _video,
+                          //       // videoPlayerController: ,
+                          //     );
+                          //   }),
+                          // );
+                        } catch (e) {
+                          logger.wtf('Camera Screen Error: $e');
+                        }
+                      },
                     ),
                   ],
                 ),
@@ -709,57 +801,57 @@ class _CameraExampleHomeState extends State<CameraExampleHome> with WidgetsBindi
 
 void logError(String code, String message) => print('Error: $code\nError Message: $message');
 
-class ChoiceChipWidget extends StatefulWidget {
-  final List<String> reportList;
+// class ChoiceChipWidget extends StatefulWidget {
+//   final List<String> reportList;
 
-  ChoiceChipWidget(this.reportList);
+//   ChoiceChipWidget(this.reportList);
 
-  @override
-  _ChoiceChipWidgetState createState() => new _ChoiceChipWidgetState();
-}
+//   @override
+//   _ChoiceChipWidgetState createState() => _ChoiceChipWidgetState();
+// }
 
-class _ChoiceChipWidgetState extends State<ChoiceChipWidget> {
-  String selectedChoice = " 1x ";
+// class _ChoiceChipWidgetState extends State<ChoiceChipWidget> {
+//   String selectedChoice = " 1x ";
 
-  _buildChoiceList() {
-    List<Widget> choices = List();
-    widget.reportList.forEach((item) {
-      choices.add(Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: 2,
-        ),
-        child: ChoiceChip(
-          label: Text(item),
-          labelStyle: TextStyle(
-            color: Colors.black,
-            fontSize: 14.0,
-            fontWeight: FontWeight.bold,
-          ),
-          padding: EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 10,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(5.0),
-          ),
-          backgroundColor: Color(0xffededed),
-          selectedColor: Color(0xffffc107),
-          selected: selectedChoice == item,
-          onSelected: (selected) {
-            setState(() {
-              selectedChoice = item;
-            });
-          },
-        ),
-      ));
-    });
-    return choices;
-  }
+//   _buildChoiceList() {
+//     List<Widget> choices = List();
+//     widget.reportList.forEach((item) {
+//       choices.add(Padding(
+//         padding: EdgeInsets.symmetric(
+//           horizontal: 2,
+//         ),
+//         child: ChoiceChip(
+//           label: Text(item),
+//           labelStyle: TextStyle(
+//             color: Colors.black,
+//             fontSize: 14.0,
+//             fontWeight: FontWeight.bold,
+//           ),
+//           padding: EdgeInsets.symmetric(
+//             horizontal: 12,
+//             vertical: 10,
+//           ),
+//           shape: RoundedRectangleBorder(
+//             borderRadius: BorderRadius.circular(5.0),
+//           ),
+//           backgroundColor: Color(0xffededed),
+//           selectedColor: Color(0xffffc107),
+//           selected: selectedChoice == item,
+//           onSelected: (selected) {
+//             setState(() {
+//               selectedChoice = item;
+//             });
+//           },
+//         ),
+//       ));
+//     });
+//     return choices;
+//   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      children: _buildChoiceList(),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return Wrap(
+//       children: _buildChoiceList(),
+//     );
+//   }
+// }

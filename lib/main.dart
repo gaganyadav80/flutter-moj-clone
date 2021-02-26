@@ -18,7 +18,7 @@ Future<void> main() async {
     WidgetsFlutterBinding.ensureInitialized();
     cameras = await availableCameras();
   } on CameraException catch (e) {
-    logError(e.code, e.description);
+    // logError(e.code, e.description);
   }
   SystemChrome.setEnabledSystemUIOverlays([]);
   runApp(CameraApp());
@@ -72,59 +72,60 @@ class _ChooseScreenState extends State<ChooseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    initializeUtils(context);
-
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: Text("Video Editor"),
-        centerTitle: true,
-      ),
-      body: Center(
-        child: Container(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              RaisedButton(
-                child: Text("Record Video"),
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => CameraExampleHome(
-                      cameras: cameras,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 20.0),
-              RaisedButton(
-                child: Text("Browse from gallery"),
-                onPressed: () async {
-                  PickedFile pickedFile = await _picker.getVideo(source: ImageSource.gallery);
-                  if (pickedFile != null) {
-                    _video = File(pickedFile.path);
-                    await _initVideo();
-                  } else {
-                    print("No video file selected");
-                  }
-
-                  if (_video != null)
-                    Navigator.push(
+    return Builder(
+      builder: (context) {
+        // initializeUtils(context);
+        return Scaffold(
+          appBar: AppBar(
+            automaticallyImplyLeading: false,
+            title: Text("Video Editor"),
+            centerTitle: true,
+          ),
+          body: Center(
+            child: Container(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  RaisedButton(
+                    child: Text("Record Video"),
+                    onPressed: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => EditVideoScreen(
-                          video: _video,
-                          videoPlayerController: _videoPlayerController,
-                          chewieController: _chewieController,
-                        ),
+                        builder: (context) => CameraExampleHome(cameras: cameras),
                       ),
-                    );
-                },
+                    ),
+                  ),
+                  SizedBox(height: 20.0),
+                  RaisedButton(
+                    child: Text("Browse from gallery"),
+                    onPressed: () async {
+                      PickedFile pickedFile = await _picker.getVideo(source: ImageSource.gallery);
+                      if (pickedFile != null) {
+                        _video = File(pickedFile.path);
+                        await _initVideo();
+                      } else {
+                        print("No video file selected");
+                      }
+
+                      if (_video != null)
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EditVideoScreen(
+                              video: _video,
+                              videoPlayerController: _videoPlayerController,
+                              chewieController: _chewieController,
+                            ),
+                          ),
+                        );
+                    },
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
