@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 double screenHeight;
 
+// TODO remove --> 420.44, 747.45
 double screenwidth;
 
 void initializeUtils(BuildContext context) {

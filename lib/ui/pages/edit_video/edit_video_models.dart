@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'edit_video_screen.dart';
 
-List<DraggableTextModel> textModelList = [];
-// Offset textOffset = Offset(150.0, 300.0);
+List<DraggableTextWidget> textModelList = [];
 
 class FilterModel {
   final Color filterColor;
@@ -24,17 +23,17 @@ class TextModel {
   void changeOffset(Offset offset) => textOffset = offset;
 }
 
-class DraggableTextModel extends StatefulWidget {
-  const DraggableTextModel({Key key, @required this.textModel, this.editVideoScreenState}) : super(key: key);
+class DraggableTextWidget extends StatefulWidget {
+  const DraggableTextWidget({Key key, @required this.textModel, this.editVideoScreenState}) : super(key: key);
 
   final TextModel textModel;
   final EditVideoScreenState editVideoScreenState;
 
   @override
-  _DraggableTextModelState createState() => _DraggableTextModelState();
+  _DraggableTextWidgetState createState() => _DraggableTextWidgetState();
 }
 
-class _DraggableTextModelState extends State<DraggableTextModel> {
+class _DraggableTextWidgetState extends State<DraggableTextWidget> {
   @override
   Widget build(BuildContext context) {
     return Draggable<String>(

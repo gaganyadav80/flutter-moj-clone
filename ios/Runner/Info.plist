@@ -9,6 +9,8 @@
 	<string>Used to capture audio for image picker plugin</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Used to demonstrate image picker plugin</string>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>Used to add music to the video editor</string>
 <!-- Permissions to pick videos from gallery -->
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>

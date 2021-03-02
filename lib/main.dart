@@ -7,6 +7,7 @@ import 'package:edverhub_video_editor/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:video_player/video_player.dart';
 import 'ui/pages/edit_video/edit_video_screen.dart';
 
@@ -56,17 +57,29 @@ class _ChooseScreenState extends State<ChooseScreen> {
 
   VideoPlayerController _videoPlayerController;
   ChewieController _chewieController;
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   Future<void> _initVideo() async {
-    _videoPlayerController = VideoPlayerController.file(_video);
-    await _videoPlayerController.initialize();
+    _videoPlayerController = VideoPlayerController.file(_video, videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true));
+    await _videoPlayerController.initialize().then((value) {
+      _videoPlayerController.addListener(() async {
+        if (_videoPlayerController.value.position == _videoPlayerController.value.duration) {
+          await _videoPlayerController.seekTo(Duration(seconds: 0));
+          await _audioPlayer.seek(Duration(seconds: 0));
+          _videoPlayerController.play();
+          _audioPlayer.play();
+          print('audio played');
+        }
+      });
+    });
 
     _chewieController = ChewieController(
       videoPlayerController: _videoPlayerController,
+      playbackSpeeds: [1.0, 0.25, 0.5, 1.5, 2.0],
       showControls: false,
       allowedScreenSleep: false,
       autoPlay: true,
-      looping: true,
+      looping: false,
     );
   }
 
@@ -116,6 +129,7 @@ class _ChooseScreenState extends State<ChooseScreen> {
                           video: _video,
                           videoPlayerController: _videoPlayerController,
                           chewieController: _chewieController,
+                          audioPlayer: _audioPlayer,
                         ),
                       ),
                     );
