@@ -7,7 +7,9 @@ import 'package:edverhub_video_editor/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
+import 'providers/camera_providers.dart';
 import 'ui/pages/edit_video/edit_video_screen.dart';
 
 List<CameraDescription> cameras = [];
@@ -36,9 +38,16 @@ Future<void> main() async {
 class CameraApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: ChooseScreen(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(
+          value: CameraTimer(),
+        ),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: ChooseScreen(),
+      ),
     );
   }
 }
@@ -86,17 +95,17 @@ class _ChooseScreenState extends State<ChooseScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  RaisedButton(
+                  TextButton(
                     child: Text("Record Video"),
                     onPressed: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => CameraExampleHome(cameras: cameras),
+                        builder: (context) => CameraScreen(cameras: cameras),
                       ),
                     ),
                   ),
                   SizedBox(height: 20.0),
-                  RaisedButton(
+                  TextButton(
                     child: Text("Browse from gallery"),
                     onPressed: () async {
                       PickedFile pickedFile = await _picker.getVideo(source: ImageSource.gallery);

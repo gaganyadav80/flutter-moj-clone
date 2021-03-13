@@ -1,11 +1,9 @@
 import 'dart:io';
-
 import 'package:chewie/chewie.dart';
 import 'package:edverhub_video_editor/ui/pages/edit_video/edit_video_models.dart';
 import 'package:edverhub_video_editor/ui/pages/edit_video/filters.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
-
 import 'edit_video_widgets.dart';
 
 class EditVideoScreen extends StatefulWidget {
@@ -59,7 +57,7 @@ class EditVideoScreenState extends State<EditVideoScreen> with TickerProviderSta
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      resizeToAvoidBottomPadding: false,
+      // resizeToAvoidBottomPadding: false,
       body: Stack(
         clipBehavior: Clip.hardEdge,
         children: <Widget>[
