@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
+import 'providers/camera_providers.dart';
 import 'ui/pages/edit_video/edit_video_screen.dart';
 
 List<CameraDescription> cameras = [];
@@ -25,12 +26,28 @@ Future<void> main() async {
   runApp(CameraApp());
 }
 
+// class CameraExampleHome extends StatefulWidget {
+//   @override
+//   _CameraExampleHomeState createState() {
+//     return _CameraExampleHomeState();
+//   }
+// }
+
+/// Returns a suitable camera icon for [direction].
+
 class CameraApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: ChooseScreen(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(
+          value: CameraTimer(),
+        ),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: ChooseScreen(),
+      ),
     );
   }
 }
