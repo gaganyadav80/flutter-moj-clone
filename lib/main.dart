@@ -90,17 +90,17 @@ class _ChooseScreenState extends State<ChooseScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  RaisedButton(
+                  TextButton(
                     child: Text("Record Video"),
                     onPressed: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => CameraExampleHome(cameras: cameras),
+                        builder: (context) => CameraScreen(),
                       ),
                     ),
                   ),
                   SizedBox(height: 20.0),
-                  RaisedButton(
+                  TextButton(
                     child: Text("Browse from gallery"),
                     onPressed: () async {
                       PickedFile pickedFile = await _picker.getVideo(source: ImageSource.gallery);

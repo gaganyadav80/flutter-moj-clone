@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:chewie/chewie.dart';
 import 'package:edverhub_video_editor/ui/pages/edit_video/edit_video_models.dart';
 import 'package:edverhub_video_editor/variables.dart';
