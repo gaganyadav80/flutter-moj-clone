@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:edverhub_video_editor/ui/pages/edit_video/edit_video_models.dart';
 import 'package:edverhub_video_editor/variables.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
 import 'package:just_audio/just_audio.dart';
 
 import 'edit_video_screen.dart';

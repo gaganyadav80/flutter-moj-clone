@@ -1,14 +1,12 @@
 import 'dart:async';
-import 'dart:io';
-import 'package:edverhub_video_editor/main.dart';
 import 'package:edverhub_video_editor/ui/components/logger.dart';
+import 'package:edverhub_video_editor/variables.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
-// import 'package:gallery_saver/gallery_saver.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
+
+import 'edit_video/edit_video_screen.dart';
 
 void logError(String code, String message) => print('Error: $code\nError Message: $message');
 
@@ -61,13 +59,16 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
   // Counting pointers (number of user fingers on screen)
   int _pointers = 0;
   // ignore: unused_field
-  Future<void> _future;
+  // Future<void> _future;
   double iconSize = 30;
   @override
   void initState() {
+    super.initState();
+
+    _requestPermission([Permission.camera, Permission.microphone, Permission.storage]);
+
     _cameraMode = 0;
-    _future = onNewCameraSelected(0);
-    // _future = controller.setFocusMode(FocusMode.auto);
+    // _future = onNewCameraSelected(0);
     WidgetsBinding.instance.addObserver(this);
     _flashModeControlRowAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
@@ -93,7 +94,6 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
       parent: _focusModeControlRowAnimationController,
       curve: Curves.easeInCubic,
     );
-    super.initState();
   }
 
   @override
@@ -138,7 +138,7 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
       // controller.dispose();
     } else if (state == AppLifecycleState.resumed) {
       if (controller != null) {
-        onNewCameraSelected(_cameraMode);
+        // onNewCameraSelected(_cameraMode);
       }
     }
   }
@@ -249,7 +249,7 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<void> onNewCameraSelected(int cameradesc) async {
+  Future<String> onNewCameraSelected(int cameradesc) async {
     if (controller != null) {
       await controller.dispose();
     }
@@ -283,6 +283,8 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
     if (mounted) {
       setState(() {});
     }
+
+    return "DONE";
   }
 
   Future<void> onFlashModeButtonPressed() {
@@ -293,6 +295,8 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
       _exposureModeControlRowAnimationController.reverse();
       _focusModeControlRowAnimationController.reverse();
     }
+
+    return null;
   }
 
   Future<void> onExposureModeButtonPressed() {
@@ -303,6 +307,8 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
       _flashModeControlRowAnimationController.reverse();
       _focusModeControlRowAnimationController.reverse();
     }
+
+    return null;
   }
 
   Future<void> onAudioModeButtonPressed() async {
@@ -452,17 +458,21 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
     }
   }
 
-  Future<bool> _requestPermission(Permission permission) async {
-    if (await permission.isGranted) {
-      return true;
-    } else {
-      var result = await permission.request();
-      if (result == PermissionStatus.granted) {
+  Future<bool> _requestPermission(List<Permission> permissionList) async {
+    for (Permission permission in permissionList) {
+      if (await permission.isGranted) {
         return true;
       } else {
-        return false;
+        var result = await permission.request();
+        if (result == PermissionStatus.granted) {
+          return true;
+        } else {
+          return false;
+        }
       }
     }
+
+    return false;
   }
 
   Future<void> startPauseButton() async {
@@ -512,7 +522,8 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
 
   @override
   Widget build(BuildContext context) {
-    print(cameras);
+    // print(cameras);
+    onNewCameraSelected(0).then((value) => print(value));
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -682,13 +693,15 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
                 // onPressed: saveAndProceed,
                 onPressed: () async {
                   await onStopButtonPressed();
-                  // await initVideo(videoFile.path);
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(
-                  //     builder: (context) => EditVideoScreen(videoPath: videoFile.path),
-                  //   ),
-                  // );
+                  await initVideo(videoFile.path);
+                  originalVideoPath = videoFile.path;
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EditVideoScreen(),
+                    ),
+                  );
                 },
               ),
             ],
@@ -698,6 +711,7 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
     );
   }
 }
+
 // TODO: Trim Clips
 // Future<void> saveAndProceed() async {
 //   await onStopButtonPressed();
