@@ -1,40 +1,61 @@
 import 'dart:async';
 import 'dart:io';
+
 import 'package:camera/camera.dart';
-import 'package:chewie/chewie.dart';
-import 'package:edverhub_video_editor/ui/pages/camera_screen.dart';
-import 'package:edverhub_video_editor/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:just_audio/just_audio.dart';
-import 'package:video_player/video_player.dart';
+import 'package:path_provider/path_provider.dart';
+
+import 'package:edverhub_video_editor/ui/pages/camera_screen.dart';
+
 import 'ui/pages/edit_video/edit_video_screen.dart';
+import 'ui/pages/edit_video/ffmpeg_filters.dart';
+import 'variables.dart';
 
-List<CameraDescription> cameras = [];
-
-Future<void> main() async {
+void main() async {
   // Fetch the available cameras before initializing the app.
   try {
     WidgetsFlutterBinding.ensureInitialized();
     cameras = await availableCameras();
   } on CameraException catch (e) {
+    print(e);
     // logError(e.code, e.description);
   }
   SystemChrome.setEnabledSystemUIOverlays([]);
-  runApp(CameraApp());
+
+  appDirectory = (await getApplicationDocumentsDirectory()).path;
+  final Directory _acv = Directory('$appDirectory/acv/');
+  final Directory _imgs = Directory('$appDirectory/img/');
+  if ((await _acv.exists() == false) && (await _imgs.exists() == false)) {
+    await _acv.create(recursive: true);
+    await _imgs.create(recursive: true);
+
+    /// Copy each .acv photoshop curve files to document directory.
+    for (int i = 0; i < ACV_FILENAMES.length; i++) {
+      try {
+        final String filename = ACV_FILENAMES[i];
+        final ByteData bytes = await rootBundle.load("assets/acv/${ACV_FILENAMES[i]}");
+        await writeToFile(bytes, '$appDirectory/acv/$filename');
+      } on Exception catch (e) {
+        print(e);
+        continue;
+      }
+    }
+
+    final String filename = 'portrait.png';
+    final ByteData bytes = await rootBundle.load("assets/img/$filename");
+    await writeToFile(bytes, '$appDirectory/img/$filename');
+
+    for (int i = 1; i < FFMPEG_FILTERS.length; i++) {
+      await flutterFFmpeg.execute("-y -i $appDirectory/img/portrait.png ${FFMPEG_FILTERS[i]} $appDirectory/img/${FFMPEG_FILTER_NAMES[i].replaceAll(" ", "").toLowerCase()}.png");
+    }
+  }
+
+  runApp(VideoEditorApp());
 }
 
-// class CameraExampleHome extends StatefulWidget {
-//   @override
-//   _CameraExampleHomeState createState() {
-//     return _CameraExampleHomeState();
-//   }
-// }
-
-/// Returns a suitable camera icon for [direction].
-
-class CameraApp extends StatelessWidget {
+class VideoEditorApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -53,41 +74,11 @@ class ChooseScreen extends StatefulWidget {
 
 class _ChooseScreenState extends State<ChooseScreen> {
   final _picker = ImagePicker();
-  File _video;
-
-  VideoPlayerController _videoPlayerController;
-  ChewieController _chewieController;
-  final AudioPlayer _audioPlayer = AudioPlayer();
-
-  Future<void> _initVideo() async {
-    _videoPlayerController = VideoPlayerController.file(_video, videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true));
-    await _videoPlayerController.initialize().then((value) {
-      _videoPlayerController.addListener(() async {
-        if (_videoPlayerController.value.position == _videoPlayerController.value.duration) {
-          await _videoPlayerController.seekTo(Duration(seconds: 0));
-          await _audioPlayer.seek(Duration(seconds: 0));
-          _videoPlayerController.play();
-          _audioPlayer.play();
-          print('audio played');
-        }
-      });
-    });
-
-    _chewieController = ChewieController(
-      videoPlayerController: _videoPlayerController,
-      playbackSpeeds: [1.0, 0.25, 0.5, 1.5, 2.0],
-      showControls: false,
-      allowedScreenSleep: false,
-      autoPlay: true,
-      looping: false,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     return Builder(
       builder: (context) {
-        // initializeUtils(context);
         return Scaffold(
           appBar: AppBar(
             automaticallyImplyLeading: false,
@@ -113,24 +104,21 @@ class _ChooseScreenState extends State<ChooseScreen> {
                     child: Text("Browse from gallery"),
                     onPressed: () async {
                       PickedFile pickedFile = await _picker.getVideo(source: ImageSource.gallery);
-                      if (pickedFile != null) {
-                        _video = File(pickedFile.path);
-                        await _initVideo();
-                      } else {
-                        print("No video file selected");
-                      }
 
-                      if (_video != null)
+                      if (pickedFile != null) {
+                        await initVideo(pickedFile.path);
+
+                        originalVideoPath = pickedFile.path;
+
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => EditVideoScreen(
-                              video: _video,
-                              videoPlayerController: _videoPlayerController,
-                              chewieController: _chewieController,
-                            ),
+                            builder: (context) => EditVideoScreen(),
                           ),
                         );
+                      } else {
+                        print("No video file selected");
+                      }
                     },
                   ),
                 ],

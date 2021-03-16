@@ -1,12 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:edverhub_video_editor/ui/components/logger.dart';
-import 'package:edverhub_video_editor/ui/pages/edit_video/edit_video_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
 // import 'package:gallery_saver/gallery_saver.dart';
-import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
@@ -881,7 +879,7 @@ void logError(String code, String message) => print('Error: $code\nError Message
 //   }
 // }
 
-class Timer with ChangeNotifier {
+class MyTimer with ChangeNotifier {
   int timeInMilliseconds = 0;
   void startTimer() {}
 }

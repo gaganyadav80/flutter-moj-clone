@@ -1,24 +1,38 @@
 import 'dart:io';
 
-import 'package:chewie/chewie.dart';
 import 'package:edverhub_video_editor/ui/pages/edit_video/edit_video_models.dart';
-import 'package:edverhub_video_editor/ui/pages/edit_video/filters.dart';
-import 'package:edverhub_video_editor/utils.dart';
+import 'package:edverhub_video_editor/variables.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
 import 'package:just_audio/just_audio.dart';
 
 import 'edit_video_screen.dart';
+import 'ffmpeg_filters.dart';
 
 class FiltersModalSheet extends StatefulWidget {
-  const FiltersModalSheet({Key key, this.editVideoScreenState}) : super(key: key);
+  const FiltersModalSheet({
+    Key key,
+    this.editVideoScreenState,
+    // this.originalVideoPath,
+  }) : super(key: key);
 
   final EditVideoScreenState editVideoScreenState;
+  // final String originalVideoPath;
 
   @override
   _FiltersModalSheetState createState() => _FiltersModalSheetState();
 }
 
 class _FiltersModalSheetState extends State<FiltersModalSheet> {
+  String filterImgPath;
+  Widget preview;
+  final File _output = File('$appDirectory/output.mp4');
+  bool filterFlag = false;
+
+  bool isLoading = false;
+
+  Widget loading = Center(child: CircularProgressIndicator.adaptive());
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -26,15 +40,56 @@ class _FiltersModalSheetState extends State<FiltersModalSheet> {
       width: double.infinity,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: FILTERS.length,
-        itemBuilder: (context, index) {
+        itemCount: FFMPEG_FILTERS.length,
+        itemBuilder: (BuildContext context, int index) {
+          if (index != 0) filterImgPath = "$appDirectory/img/${FFMPEG_FILTER_NAMES[index].replaceAll(" ", "").toLowerCase()}.png";
+          print(filterImgPath);
+
+          if (index != 0)
+            // setState(() {
+            preview = ClipOval(
+              child: Image.file(
+                File(filterImgPath),
+                fit: BoxFit.fitWidth,
+                height: 100.0,
+                width: 100.0,
+              ),
+            );
+          // });
+
           return InkWell(
-            onTap: () {
-              widget.editVideoScreenState.setState(() {
-                // if (index == 0)
-                currentFilterColor = FILTERS[index];
-              });
-            },
+            onTap: isLoading
+                ? () {}
+                : () {
+                    widget.editVideoScreenState.setState(() {
+                      isLoading = true;
+
+                      if (index == 0) {
+                        if (filterFlag) {
+                          initVideo(originalVideoPath).then((_) => filterFlag = false);
+                        }
+                      } else if (index != 0) {
+                        setState(() {
+                          preview = loading;
+                        });
+                        _processVideo(command: FFMPEG_FILTERS[index]).then((value) async {
+                          await initVideo(value).then((_) => filterFlag = true);
+
+                          setState(() {
+                            preview = ClipOval(
+                              child: Image.file(
+                                File(filterImgPath),
+                                fit: BoxFit.fitWidth,
+                                height: 100.0,
+                                width: 100.0,
+                              ),
+                            );
+                          });
+                        });
+                      }
+                      isLoading = false;
+                    });
+                  },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 5.0),
               child: Column(
@@ -60,22 +115,11 @@ class _FiltersModalSheetState extends State<FiltersModalSheet> {
                       : CircleAvatar(
                           radius: 50.0,
                           backgroundColor: Colors.transparent,
-                          child: ClipOval(
-                            child: ColorFiltered(
-                              colorFilter:
-                                  FILTERS[index].filterMatrix == null ? ColorFilter.mode(FILTERS[index].filterColor, FILTERS[index].blendMode) : ColorFilter.matrix(FILTERS[index].filterMatrix),
-                              child: Image.asset(
-                                "assets/img/portrait.png",
-                                fit: BoxFit.fitWidth,
-                                height: 100.0,
-                                width: 100.0,
-                              ),
-                            ),
-                          ),
+                          child: preview,
                         ),
                   SizedBox(height: 10.0),
                   Text(
-                    FILTERS[index].filterName,
+                    FFMPEG_FILTER_NAMES[index],
                     style: TextStyle(
                       color: Colors.white,
                     ),
@@ -88,13 +132,23 @@ class _FiltersModalSheetState extends State<FiltersModalSheet> {
       ),
     );
   }
+
+  Future<String> _processVideo({String command}) async {
+    if (command != null) {
+      if (await _output.exists()) {
+        print(_output.path);
+        _output.delete();
+      }
+      await flutterFFmpeg.execute("-y -i $originalVideoPath $command -vcodec libx264 -acodec aac $appDirectory/output.mp4");
+      return "$appDirectory/output.mp4";
+    } else {
+      return null;
+    }
+  }
 }
 
 class SoundModalSheet extends StatefulWidget {
   SoundModalSheet({Key key}) : super(key: key);
-
-  // final AudioPlayer audioPlayer;
-  // final ChewieController chewieController;
 
   @override
   State<StatefulWidget> createState() {
@@ -117,7 +171,7 @@ class _SoundModalSheetState extends State<SoundModalSheet> {
       if (path.contains("Call Recorder") || path.contains("call_recorder")) continue;
       if (path.contains("WhatsApp") || path.contains("Signal") || path.contains("Telegram")) continue;
       //TODO remove
-      if (path.contains("MIUI")) continue;
+      if (path.contains("MIUI") || path.contains("Realme")) continue;
       if (path.contains("PhoneRecord")) continue;
 
       bool isAudio = path.endsWith('.mp3') || path.endsWith('.wav') || path.endsWith('.aac') || path.endsWith('.m4a') || path.endsWith('.flac');
@@ -305,9 +359,7 @@ class _TextModalSheetState extends State<TextModalSheet> {
 }
 
 class SpeedModalSheet extends StatefulWidget {
-  SpeedModalSheet({Key key, this.chewieController}) : super(key: key);
-
-  final ChewieController chewieController;
+  SpeedModalSheet({Key key}) : super(key: key);
 
   @override
   _SpeedModalSheetState createState() => _SpeedModalSheetState();
@@ -319,24 +371,21 @@ class _SpeedModalSheetState extends State<SpeedModalSheet> {
 
   @override
   Widget build(BuildContext context) {
-    // [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
-    // [1.0, 0.25, 0.5, 1.5, 2.0]
-
     return Container(
       height: 150.0,
       width: double.infinity,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: widget.chewieController.playbackSpeeds.length,
+        itemCount: chewieController.playbackSpeeds.length,
         itemBuilder: (context, index) {
           return InkWell(
             onTap: () {
-              widget.chewieController.videoPlayerController.setPlaybackSpeed(
-                widget.chewieController.playbackSpeeds[index],
+              chewieController.videoPlayerController.setPlaybackSpeed(
+                chewieController.playbackSpeeds[index],
               );
             },
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: screenwidth * 0.024),
+              padding: EdgeInsets.symmetric(horizontal: 10.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,

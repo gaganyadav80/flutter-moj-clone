@@ -4,14 +4,14 @@ import 'edit_video_screen.dart';
 
 List<DraggableTextWidget> textModelList = [];
 
-class FilterModel {
-  final Color filterColor;
-  final BlendMode blendMode;
-  final List<double> filterMatrix;
-  final String filterName;
+// class FilterModel {
+//   final Color filterColor;
+//   final BlendMode blendMode;
+//   final List<double> filterMatrix;
+//   final String filterName;
 
-  FilterModel(this.filterName, this.filterColor, this.blendMode, this.filterMatrix);
-}
+//   FilterModel(this.filterName, this.filterColor, this.blendMode, this.filterMatrix);
+// }
 
 class TextModel {
   String text;

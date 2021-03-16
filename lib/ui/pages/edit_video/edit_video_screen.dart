@@ -2,25 +2,15 @@ import 'dart:io';
 
 import 'package:chewie/chewie.dart';
 import 'package:edverhub_video_editor/ui/pages/edit_video/edit_video_models.dart';
-import 'package:edverhub_video_editor/ui/pages/edit_video/filters.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:edverhub_video_editor/variables.dart';
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
-import 'package:video_player/video_player.dart';
 
 import 'edit_video_widgets.dart';
 
 class EditVideoScreen extends StatefulWidget {
-  EditVideoScreen({Key key, this.video, this.chewieController, this.videoPlayerController, this.audioPlayer})
-      : assert(video != null),
-        assert(chewieController != null),
-        assert(videoPlayerController != null),
-        super(key: key);
+  EditVideoScreen({Key key}) : super(key: key);
 
-  final File video;
-  final VideoPlayerController videoPlayerController;
-  final ChewieController chewieController;
-  final AudioPlayer audioPlayer;
+  // final String videoPath;
 
   @override
   EditVideoScreenState createState() => EditVideoScreenState();
@@ -28,36 +18,41 @@ class EditVideoScreen extends StatefulWidget {
 
 class EditVideoScreenState extends State<EditVideoScreen> with TickerProviderStateMixin {
   AnimationController _animationController;
-  // bool isPlaying = true;
   final TextEditingController textController = TextEditingController();
-  File audioFile;
+  // File audioFile;
 
   void _handleOnPressed() {
     setState(() {
-      if (widget.audioPlayer.playing)
-        widget.audioPlayer.pause();
+      if (audioPlayer.playing)
+        audioPlayer.pause();
       else
-        widget.audioPlayer.play();
+        audioPlayer.play();
 
-      widget.chewieController.togglePause();
-      // isPlaying = !isPlaying;
-      widget.chewieController.isPlaying ? _animationController.reverse() : _animationController.forward();
+      chewieController.togglePause();
+      chewieController.isPlaying ? _animationController.reverse() : _animationController.forward();
     });
   }
+
+  // void _awaitVideo() async {
+  //   await initVideo(widget.videoPath);
+  // }
 
   @override
   void initState() {
     super.initState();
+    // _awaitVideo();
     _animationController = AnimationController(vsync: this, duration: Duration(milliseconds: 450));
   }
 
   @override
   void dispose() {
-    widget.chewieController.pause();
-    widget.chewieController.dispose();
-    widget.videoPlayerController.dispose();
-    widget.audioPlayer.stop();
-    currentFilterColor = FILTERS[0];
+    chewieController.pause();
+    chewieController.dispose();
+    videoPlayerController.dispose();
+    audioPlayer.stop();
+    audioPlayer.dispose();
+    //TODO flag
+    // currentFilterColor = FILTERS[0];
     textController?.dispose();
     textModelList.clear();
     super.dispose();
@@ -70,17 +65,13 @@ class EditVideoScreenState extends State<EditVideoScreen> with TickerProviderSta
       body: Stack(
         clipBehavior: Clip.hardEdge,
         children: <Widget>[
-          widget.videoPlayerController.value.initialized
-              ? ColorFiltered(
-                  colorFilter:
-                      currentFilterColor.filterColor != null ? ColorFilter.mode(currentFilterColor.filterColor, currentFilterColor.blendMode) : ColorFilter.matrix(currentFilterColor.filterMatrix),
-                  child: Container(
-                    color: Colors.black,
-                    width: MediaQuery.of(context).size.width,
-                    height: MediaQuery.of(context).size.height,
-                    child: Chewie(
-                      controller: widget.chewieController,
-                    ),
+          videoPlayerController.value.initialized
+              ? Container(
+                  color: Colors.black,
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height,
+                  child: Chewie(
+                    controller: chewieController,
                   ),
                 )
               : Container(),
@@ -142,7 +133,7 @@ class EditVideoScreenState extends State<EditVideoScreen> with TickerProviderSta
                   progress: _animationController,
                 ),
                 SizedBox(width: 5.0),
-                widget.chewieController.isPlaying
+                chewieController.isPlaying
                     ? Text("Pause", style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold, color: Colors.white))
                     : Text("Play", style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold, color: Colors.white)),
               ],
@@ -189,6 +180,7 @@ class EditVideoScreenState extends State<EditVideoScreen> with TickerProviderSta
                   barrierColor: Colors.transparent,
                   builder: (context) => FiltersModalSheet(
                     editVideoScreenState: this,
+                    // originalVideoPath: widget.videoPath,
                   ),
                 ),
               ),
@@ -202,79 +194,45 @@ class EditVideoScreenState extends State<EditVideoScreen> with TickerProviderSta
                   ],
                 ),
                 onTap: () async {
-                  // showModalBottomSheet(
-                  //   context: context,
-                  //   backgroundColor: Colors.black,
-                  //   barrierColor: Colors.transparent,
-                  //   builder: (context) => SoundModalSheet(),
-                  // );
-                  ///
-                  ///
-                  ///
-                  if (widget.chewieController.isPlaying) {
-                    widget.chewieController.pause();
-                    widget.audioPlayer.pause();
+                  if (chewieController.isPlaying) {
+                    chewieController.pause();
+                    audioPlayer.pause();
                   }
                   setState(() {
-                    widget.chewieController.isPlaying ? _animationController.reverse() : _animationController.forward();
+                    chewieController.isPlaying ? _animationController.reverse() : _animationController.forward();
                   });
 
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => SoundModalSheet(
-                          // audioPlayer: widget.audioPlayer,
-                          // chewieController: widget.chewieController,
-                          ),
+                      builder: (context) => SoundModalSheet(),
                     ),
                   ).then((value) async {
                     print("VALUE ========= $value");
 
                     if (value != null) {
-                      await widget.audioPlayer.setFilePath(value);
-                      await widget.chewieController.setVolume(0.0);
+                      await audioPlayer.setFilePath(value);
+                      await chewieController.setVolume(0.0);
 
-                      if (widget.audioPlayer.duration > widget.chewieController.videoPlayerController.value.duration) {
-                        await widget.audioPlayer.setClip(start: Duration(seconds: 0), end: widget.chewieController.videoPlayerController.value.duration);
+                      if (audioPlayer.duration > chewieController.videoPlayerController.value.duration) {
+                        await audioPlayer.setClip(start: Duration(seconds: 0), end: chewieController.videoPlayerController.value.duration);
                       }
-                      await widget.chewieController.seekTo(Duration(seconds: 0));
-                      await widget.audioPlayer.seek(Duration(seconds: 0));
+                      await chewieController.seekTo(Duration(seconds: 0));
+                      await audioPlayer.seek(Duration(seconds: 0));
 
                       setState(() {
-                        widget.chewieController.play();
-                        widget.audioPlayer.play();
-                        widget.chewieController.isPlaying ? _animationController.reverse() : _animationController.forward();
+                        chewieController.play();
+                        audioPlayer.play();
+                        chewieController.isPlaying ? _animationController.reverse() : _animationController.forward();
                       });
                     } else {
                       setState(() {
-                        widget.chewieController.play();
-                        widget.audioPlayer.play();
-                        widget.chewieController.isPlaying ? _animationController.reverse() : _animationController.forward();
+                        chewieController.play();
+                        audioPlayer.play();
+                        chewieController.isPlaying ? _animationController.reverse() : _animationController.forward();
                       });
                     }
                   });
-
-                  // FilePickerResult result = await FilePicker.platform.pickFiles(type: FileType.audio);
-
-                  // if (result != null) {
-                  //   audioFile = File(result.files.single.path);
-                  //   await widget.chewieController.setVolume(0.0);
-                  //   print(audioFile.path);
-
-                  //   await widget.audioPlayer.setFilePath(audioFile.path);
-                  //   if (widget.audioPlayer.duration > widget.chewieController.videoPlayerController.value.duration) {
-                  //     await widget.audioPlayer.setClip(start: Duration(seconds: 0), end: widget.chewieController.videoPlayerController.value.duration);
-                  //   }
-                  //   await widget.chewieController.seekTo(Duration(seconds: 0));
-
-                  //   setState(() {
-                  //     widget.chewieController.play();
-                  //     widget.audioPlayer.play();
-                  //     widget.chewieController.isPlaying ? _animationController.reverse() : _animationController.forward();
-                  //   });
-                  // } else {
-                  //   print("Audio pick cancled");
-                  // }
                 },
               ),
             ],
@@ -302,9 +260,8 @@ class EditVideoScreenState extends State<EditVideoScreen> with TickerProviderSta
                   backgroundColor: Colors.black,
                   barrierColor: Colors.transparent,
                   builder: (context) => SpeedModalSheet(
-                    // editVideoScreenState: this,
-                    chewieController: widget.chewieController,
-                  ),
+                      // editVideoScreenState: this,
+                      ),
                 ),
               ),
               SizedBox(width: 40.0),
@@ -323,7 +280,6 @@ class EditVideoScreenState extends State<EditVideoScreen> with TickerProviderSta
                   useRootNavigator: true,
                   backgroundColor: Colors.black.withOpacity(0.6),
                   barrierColor: Colors.black.withOpacity(0.6),
-                  // shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25.0))),
                   builder: (BuildContext context) => Padding(
                     padding: MediaQuery.of(context).viewInsets,
                     child: TextModalSheet(
